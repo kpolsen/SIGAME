@@ -11,7 +11,6 @@ import sigame.plot as plot
 import sigame.Cloudy_modeling as clo
 
 # Import other modules
-# from __future__ import division
 import pandas as pd
 import numpy as np
 import pdb as pdb
@@ -22,7 +21,6 @@ import matplotlib.image as mpimg
 from matplotlib.offsetbox import TextArea, DrawingArea, OffsetImage, AnnotationBbox
 from mpl_toolkits import mplot3d
 import pickle
-# from sphviewer.tools import QuickView
 from matplotlib.colors import LogNorm
 import copy
 import os as os
@@ -31,8 +29,6 @@ from scipy.interpolate import griddata
 from scipy.interpolate import interp1d
 import astropy.constants as c
 import astropy.units as u
-#from mayavi import mlab
-#mlab.options.offscreen = True
 from scipy import integrate
 from astropy.cosmology import FlatLambdaCDM
 import sklearn as sklearn
@@ -3431,7 +3427,6 @@ def resolution_test(names,labnames,**kwargs):
 
     if p.savefig:
         plt.savefig(p.d_plot + 'luminosity/compare_Simba100_w_Simba25.png', format='png', dpi=300) # .eps for paper!
-
 
 def map_line(**kwargs):
     """ Map surface brightness of one line.
