@@ -1,5 +1,6 @@
 parameters.txt
 parameters.bk
+data/results/**
 cloudy_test/**
 cloudy/**
 look-up-tables/cloudy/input/**
@@ -13,7 +14,6 @@ skirt/*.ski
 !skirt/skirt_template.ski
 !data/utils.py
 !data/galaxy_selection/**
-!data/results/**
 !data/observations/**
 temp_params.npy
 .DS_store

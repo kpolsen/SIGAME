@@ -34,7 +34,7 @@ print('' + '\n' +
       '---- A code to simulate the far-IR emission lines of the ISM  ----' + '\n' +
       '------------- in galaxies from hydrodynamical codes --------------' + '\n' +
       '----- for the interpretation and prediction of observations. -----' + '\n' +
-      '- Contact: Karen Olsen, karenolsen (at) email.arizona.edu (2020) -' + '\n' +
+      '- Contact: Karen Olsen, karenolsen (at) email.arizona.edu (2021) -' + '\n' +
       '' + '\n')
 # style from http://www.kammerl.de/ascii/AsciiSignature.php
 # (alternatives: epic, roman, blocks, varsity, pepples, soft, standard, starwars)
