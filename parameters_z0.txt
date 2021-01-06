@@ -83,7 +83,7 @@ Should SIGAME write A LOT (+1) or just a little (-1)? [verbose]
 +1
 
 Number of cores available [N_cores]
-2
+1
 
 Number of parameters in each dimension of Cloudy grid [N_param]
 6
@@ -93,14 +93,14 @@ Number of parameters in each dimension of Cloudy grid [N_param]
 Select which tasks to execute by changing a '-1' to a +1':
 
 BACKEND TASKS
--1 step2_setup_SKIRT
++1 step2_setup_SKIRT
 -1 step2_run_SKIRT
 -1 step2_read_SKIRT
 -1 step3_grid_gas
 -1 step4_setup_Cloudy_grid
 -1 step4_read_Cloudy_grid
 -1 step4_make_Cloudy_table
-+1 step5_interpolate
+-1 step5_interpolate
 
 
 
