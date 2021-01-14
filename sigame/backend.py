@@ -44,7 +44,7 @@ def read_SKIRT(GR):
 
     print('\n--- Step 1: Read output from SKIRT ---')
 
-    gal_indices = np.arange(0,GR.N_gal)
+    gal_indices = np.arange(GR.N_gal)
 
     if p.N_cores > 1:
         agents = p.N_cores
@@ -98,6 +98,8 @@ def run_Cloudy(GR):
 
     print('\n--- Step 3: Run Cloudy ---')
 
+    cloudy_library              =   clo.library(GR,verbose=True)
+
     # Run Cloudy
     cloudy_library.submit_jobs(ext='')
 
@@ -106,6 +108,8 @@ def combine_Cloudy(GR):
     """
 
     print('\n--- Step 3: Combine Cloudy otuput ---')
+
+    cloudy_library              =   clo.library(GR,verbose=True)
 
     # Combine output files from unfinished grid models
     cloudy_library.combine_output_files(ext='')
@@ -116,6 +120,8 @@ def complete_Cloudy(GR):
 
     print('\n--- Step 3: Complete Cloudy grid ---')
 
+    cloudy_library              =   clo.library(GR,verbose=True)
+
     # Restart grid models that never ran
     cloudy_library.debug_grid(ext='')
 
@@ -125,17 +131,21 @@ def read_Cloudy_grid(GR):
 
     print('\n--- Step 3: Read Cloudy grid output ---')
 
+    cloudy_library              =   clo.library(GR,verbose=True)
+
     # Read Cloudy grid output
     cloudy_library.read_grids()
 
-def sample_Cloudy_table(GR):
+def make_Cloudy_table(GR):
     """ Reads Cloudy grid output
     """
 
     print('\n--- Step 3: Sample Cloudy grid in look-up table ---')
 
+    cloudy_library              =   clo.library(GR,verbose=True)
+
     # Sample in terms of mean density (or other parameter)
-    cloudy_library.sample_cloudy_table()
+    cloudy_library.make_cloudy_table()
 
 def interpolate(GR):
     """ Performs interpolation in Cloudy look-up tables to get line luminosities 
