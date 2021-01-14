@@ -519,18 +519,7 @@ class cell_data:
         # Convert NIR/FUV ratio to column density NH
         logNH_cl,R_NIR_FUV_cl = aux.get_NH_from_cloudy()
         R_NIR_FUV_df = df_or.R_NIR_FUV.values
-        #dR_NIR_FUV_df = R_NIR_FUV_df/10 # How much above 10 does this ratio go?
-        #dR_NIR_FUV_cl = R_NIR_FUV_cl/np.min(R_NIR_FUV_cl) # How much above min does this ratio go?
-        #dR_NIR_FUV_df[dR_NIR_FUV_df < dR_NIR_FUV_cl.min()] = dR_NIR_FUV_cl.min() 
-        #R_NIR_FUV_df[R_NIR_FUV_df < R_NIR_FUV_cl.min()] = R_NIR_FUV_cl.min() 
-        #R_NIR_FUV_df[R_NIR_FUV_df > R_NIR_FUV_cl.max()] = R_NIR_FUV_cl.max() 
-        #interp                  =   interp1d(np.log10(R_NIR_FUV_cl),logNH_cl)
-        #logNH                   =   interp(np.log10(R_NIR_FUV_df))
-        #df_or['NH']             =   10.**logNH
-        #df['logNH']             =   logNH
-        #df['logNH']             =   df['NH'].values # When these are calculated in read_skirt
-        # TEST
-        #df['logNH']             =   20
+
 
         interp                  =   interp1d(np.log10(R_NIR_FUV_cl)[8::],logNH_cl[8::],fill_value='extrapolate',kind='slinear')
         df['logNH']             =   interp(np.log10(R_NIR_FUV_df))
@@ -557,16 +546,14 @@ class cell_data:
         #print('Now interpolating for line emission')
         for target in p.lines:
             cell_prop_new['L_'+target] = self._interpolate_cloudy_table(lookup_table,target,cell_prop)
-            #if target == '[CII]158':
-            #    print(10.**cell_prop_new['L_'+target][0])
-            #    a = aseg
             # Scale by H mass of that cell (each look-up table entry is for 1e4 Msun H mass):
             cell_prop_new['L_'+target]   =   10.**cell_prop_new['L_'+target].values*cell_prop_new.mH/1e4 
             # as 1e4 Msun was assumed in Cloudy_modeling.sample_cloudy_models()
-            # print(cell_prop_new.loc[np.argmax(cell_prop_new[target].values)])
-
             # Only count cells with actual hydrogen mass
             cell_prop_new['L_'+target].values[df_or.nH == 0] = 0
+            for phase in ['HII','HI','H2']:
+                line_lum = self._interpolate_cloudy_table(lookup_table,target+'_'+phase,cell_prop)
+                cell_prop_new['L_'+target+'_'+phase]   =   10.**line_lum*cell_prop_new.mH/1e4 
 
         #print('Now interpolating for mass')
         # Add mass just in case it's not there, and scale to match original simulation mass
@@ -574,9 +561,11 @@ class cell_data:
         for target in p.lines:
             line_lum                =   np.sum(cell_prop_new['L_'+target].values)
             print('G%i - %s: %.2e Lsun' % (self.gal_ob.gal_index,target,line_lum))
-            GR                      =   glo.global_results()
             GR.edit_item(self.gal_ob.name,'L_%s_sun' % target,line_lum)
-
+            for phase in ['HII','HI','H2']:
+                line_lum                =   np.sum(cell_prop_new['L_'+target+'_'+phase].values)
+                GR.edit_item(self.gal_ob.name,'L_%s_%s_sun' % (target,phase),line_lum)
+            
         cell_prop_new['m']      =   (cell_prop_new.cell_size * p.kpc2cm)**3 * cell_prop_new.nH * p.mH / p.Msun # Msun
         cell_prop_new['m']      *=   np.sum(GR.M_gas[self.gal_ob.gal_index]) / np.sum(cell_prop_new['m'].values)
         cell_prop_new['mH']     =   3/4 * cell_prop_new['m'].values # Msun (assuming He mass fraction of 25%)
@@ -1196,11 +1185,18 @@ def setup_SKIRT(gal_indices):
         df = pd.read_pickle(p.d_table+'fsps/z%i_age_mass_grid' % p.zred)
         simstar_skirt['age'] = simstar_skirt['age'].values * 1e9 # yr
      
-        # TEST!!!
-        #age = simstar_skirt.age.values
-        #age[age < 100e6] = 1e6
-        #simstar_skirt['age'] = age
+        # STARS
+        header = '# Star Particles\n'+\
+                        '# Columns contain: x(pc) y(pc) z(pc) h(pc) M(Msun) Z age(yr)'
         simstar_skirt[['x','y','z']] = simstar_skirt[['x','y','z']]*1000. # pc
+
+    # test!!!!
+        #index = np.ones(len(simstar_skirt))
+        #index[(simstar_skirt.x > 0) & (simstar_skirt.y > 0)] = 0
+        #print(len(simstar_skirt))
+        #simstar_skirt = simstar_skirt[index == 1].reset_index(drop=True)
+        #print(len(simstar_skirt))
+
         simstar_skirt['m_init'] = simstar_skirt['m'].values / np.interp(np.log10(simstar_skirt['age'].values),df['age'].values,df['mass_remaining'].values) 
         for col in ['x','y','z','m_init']:
             simstar_skirt[col] = simstar_skirt[col].map(lambda x: '%.2f' % x)
@@ -1210,9 +1206,10 @@ def setup_SKIRT(gal_indices):
         m1,m2 = np.min(simstar['m']),np.max(simstar['m'])
         simstar_skirt['h'] = (simstar['m']-m1)/(m2-m1)*(300-100) + 100
 
+
         # Save old stars for Bruzual&Charlot
-        skirt_filename = p.d_skirt + '%s_star_old.dat' % isrf_ob._get_name()
-        simstar_skirt_old = simstar_skirt.copy()[simstar_skirt.age.values > 10e6].reset_index(drop=True)
+        skirt_filename = p.d_skirt + '%s_star_old_test.dat' % isrf_ob._get_name()
+        simstar_skirt_old = simstar_skirt.copy()#[simstar_skirt.age.values > 10e6].reset_index(drop=True)
         simstar_skirt_old['age'] = simstar_skirt_old['age'].map(lambda x: '%.6e' % x)
         simstar_skirt_old[['x','y','z','h','m_init','Z','age']].to_csv(skirt_filename,header=False,index=False,sep=' ')
         def line_prepender(filename, line):
@@ -1221,7 +1218,7 @@ def setup_SKIRT(gal_indices):
                 f.seek(0, 0)
                 f.write(line.rstrip('\r\n') + '\n' + content)
         line_prepender(skirt_filename,header)   
- 
+
         # Edit SKIRT input file
         ski_template            =   open(p.d_skirt+'skirt_template.ski','r')
         try:
@@ -1229,7 +1226,7 @@ def setup_SKIRT(gal_indices):
         except:
             pass
         if p.sim_type == 'sph': ski_copy = open(p.d_skirt+'%s%s_G%i.ski' % (p.sim_name,p.sim_run,gal_index),'w')
-        print('(using galaxy radius for image size: %.2f kpc)' % isrf_ob.radius)
+        print('(using galaxy radius for 1/2 * image size: %.2f kpc)' % (isrf_ob.R_max))
         for line in ski_template:
      
             # Fraction of metals locked into dust
@@ -1386,9 +1383,9 @@ class isrf(galaxy):
         L_FIR_sun = self._add_FIR_lum()
         if p.verbose: print('FIR luminosity: %.4e Lsun' % self.L_FIR_sun)
         GR.edit_item(self.name,'L_FIR_sun',self.L_FIR_sun)
+        print(self.name)
  
         cellgas                 =   self.cell_data.save_dataframe()
-
 
     def _add_bol_lum(self):
         """Calculate emitted bolometric luminosity from SKIRT output files (SED instrument)
@@ -1475,9 +1472,13 @@ class isrf(galaxy):
         N_start,N_stop = aux.FIR_index(wavelengths)
 
         # Convert to solar luminosity
+        #print(F_W_m2_micron[N_start:N_stop])
+        #print('AAAAAA',F_W_m2_micron[N_start:N_stop].max())
         F_FIR_W_m2 = np.trapz(F_W_m2_micron[N_start:N_stop],x=wavelengths[N_start:N_stop])
         L_FIR_W = F_FIR_W_m2*4*np.pi*(self.distance*1e6*p.pc2m)**2
         L_FIR_sun = L_FIR_W/p.Lsun
+ 
+        print('FIR luminosity: %.2e Lsun' % L_FIR_sun)
         
         self.L_FIR_sun = L_FIR_sun
 
@@ -1760,11 +1761,16 @@ def add_mw_quantities(**kwargs):
     G0_mw = np.zeros(GR.N_gal)
     nH_mw = np.zeros(GR.N_gal)
     h_min = np.zeros(GR.N_gal)
+    nH_min = np.zeros(GR.N_gal)
+    nH_max = np.zeros(GR.N_gal)
     M_dust_DTM = np.zeros(GR.N_gal)
     age_mw = np.zeros(GR.N_gal)
     Zstar_mw = np.zeros(GR.N_gal)
     for i in range(GR.N_gal):
         gal_ob = galaxy(gal_index = i)
+        df = gal_ob.particle_data.get_dataframe('simgas')
+        nH_min[i] = np.min(df.nH.values[df.nH.values > 0])
+        nH_max[i] = np.max(df.nH.values)
         df = gal_ob.cell_data.get_dataframe()
         G0_mw[i] = np.sum(df.G0.values*df.m.values)/np.sum(df.m.values)
         nH_mw[i] = np.sum(df.nH.values*df.m.values)/np.sum(df.m.values)
@@ -1776,8 +1782,10 @@ def add_mw_quantities(**kwargs):
         Zstar_mw[i] = np.sum(df.Z.values*df.m.values)/np.sum(df.m.values)
 
     GR.add_column('G0_mw',G0_mw)
-    GR.add_column('nH_mw',nH_mw)
+    GR.add_column('nH_cell_mw',nH_mw)
     GR.add_column('h_min',h_min)
+    GR.add_column('nH_min',nH_min)
+    GR.add_column('nH_max',nH_max)
     GR.add_column('M_dust_DTM',M_dust_DTM)
     GR.add_column('age_mw',age_mw)
     GR.add_column('Zstar_mw',Zstar_mw)

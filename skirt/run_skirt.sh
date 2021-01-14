@@ -8,8 +8,7 @@
 #PBS -l walltime=02:00:00
 #PBS -j oe
 
-cd <path_to_skirt>
+cd <path_to_current_working_directory>
 
-#skirt simba_100Mpc_G$PBS_ARRAY_INDEX.ski
 skirt simba_25Mpc_G$PBS_ARRAY_INDEX.ski
 

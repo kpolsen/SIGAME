@@ -3486,7 +3486,7 @@ def line_SFR_array(lines,**kwargs):
     for i,ax in enumerate(axs):
 
         line_SFR(line=lines[i],ax=ax,select=p.select,sim_run=p.sim_runs[1],nGal=p.nGals[1],add_obs=p.add_obs,add=True,cb=True)
-        # line_SFR(line=lines[i],ax=ax,select=p.select,sim_run=p.sim_runs[0],nGal=p.nGals[0],add_obs=False,add=True,cb=False)
+        line_SFR(line=lines[i],ax=ax,select=p.select,sim_run=p.sim_runs[0],nGal=p.nGals[0],add_obs=False,add=True,cb=False)
 
 
     plt.tight_layout()
@@ -4258,7 +4258,8 @@ def CII_vs_CO(**kwargs):
     for key,val in kwargs.items():
         setattr(p,key,val)
 
-    GR                  =   glo.global_results()
+    # GR                  =   glo.global_results()
+    GR                  =   glo.global_results(sim_run=p.sim_runs[1],nGal=p.nGals[1])
 
     fig,ax1 = plt.subplots()
     L_CII = getattr(GR,'L_[CII]158_sun')
@@ -4266,14 +4267,22 @@ def CII_vs_CO(**kwargs):
     Zsfr = getattr(GR,'Zsfr')
     sc = ax1.scatter(np.log10(L_CO), np.log10(L_CII), marker='o', c=np.log10(Zsfr), cmap='viridis', zorder=0,\
         vmin=np.log10(0.05), vmax=np.log10(3.1), \
-        s=10, alpha=0.8, label='SIGAME v3')
+        s=10, alpha=0.8, label='SIGAME v3 Simba-%s' % (p.sim_runs[1]))
     print('Min Zsfr in Simba sample: ',np.min(Zsfr))
     print('indices with L_CO < 1e0:')
     print(np.argwhere(L_CO < 1e0).flatten())
     print(L_CO[np.argwhere(L_CO < 1e0).flatten()])
     print(np.argwhere(L_CO > 1e4).flatten())
 
-    print(L_CO[3])
+    GR                  =   glo.global_results(sim_run=p.sim_runs[0],nGal=p.nGals[0])
+
+    fig,ax1 = plt.subplots()
+    L_CII = getattr(GR,'L_[CII]158_sun')
+    L_CO = getattr(GR,'L_CO(1-0)_sun')
+    Zsfr = getattr(GR,'Zsfr')
+    sc = ax1.scatter(np.log10(L_CO), np.log10(L_CII), marker='>', c=np.log10(Zsfr), cmap='viridis', zorder=0,\
+        vmin=np.log10(0.05), vmax=np.log10(3.1), \
+        s=10, alpha=0.8, label='SIGAME v3 Simba-%s' % (p.sim_runs[0]))
 
     # Observations
     K16 = pd.read_pickle('data/observations/AHIMSA_sample_lit')
