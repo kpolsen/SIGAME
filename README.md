@@ -8,11 +8,11 @@ https://kpolsen.github.io/SIGAME_dev/ (not updated from v2 yet)
 This is a code to simulate the emission lines of the ISM in galaxies from hydrodynamical codes for the interpretation and prediction of observations.
 
 ### Obtaining the SÍGAME code
-Clone this repository to an empty folder on your computer by giving the following command in the terminal:
+Either download the latest release or clone/fork this repository like so:
 ``` 
 git clone https://github.com/kpolsen/SIGAME.git
 ```
-For updating from the master branch:
+By cloning/forking you can get the most recent updates from the master branch:
 ``` 
 git pull origin master
 ```
