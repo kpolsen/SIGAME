@@ -8,7 +8,7 @@
 #PBS -l walltime=02:00:00
 #PBS -j oe
 
-cd <path_to_current_working_directory>
+cd /xdisk/behroozi/mig2020/xdisk/karenolsen/skirt/release
 
 skirt simba_25Mpc_G$PBS_ARRAY_INDEX.ski
 
