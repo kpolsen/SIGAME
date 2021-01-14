@@ -53,7 +53,6 @@ def read_SKIRT(GR):
             results = pool.map(gal.read_SKIRT, gal_indices, chunksize)
     else:
         for gal_index in gal_indices:
-            print('\nNow for galaxy # %s' % gal_index)
             gal.read_SKIRT(gal_index)
 
 def grid_gas(GR):

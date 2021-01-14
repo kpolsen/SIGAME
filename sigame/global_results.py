@@ -127,13 +127,11 @@ class global_results:
             
             # Stars
             simstar         =   aux.load_temp_file(gal_ob=gal_ob, data_type='rawsimstar', gal_ob_present=True)
-            print(simstar.keys())
             M_star[i]       =   np.sum(simstar['m'].values)
             SFR[i]          =   np.sum(simstar['m'].values[simstar['age']*1e9 < 100e6])/100e6
 
             # Gas and dust
             simgas          =   aux.load_temp_file(gal_ob=gal_ob, data_type='rawsimgas', gal_ob_present=True)
-            print(simgas.keys())
 
             simgas['nH']    =   0.75 * simgas['nH'].values # So gas density > H density
             M_dust[i]       =   np.sum(simgas['m_dust'].values)

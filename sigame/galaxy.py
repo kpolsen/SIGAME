@@ -392,8 +392,6 @@ class cell_data:
         # save dataframe
         self.save_dataframe()
 
-        print(self.df.x.max())
-
     def _get_name(self):
         """ Get galaxy identifier used when running/reading SKIRT
         """
@@ -413,7 +411,6 @@ class cell_data:
         """ Add cell data as dataframe to object
         """
 
-        print(self.gal_ob)
         self.df         =   aux.load_temp_file(gal_ob=self.gal_ob,data_type='cell_data')
 
     def get_dataframe(self):
@@ -1367,7 +1364,6 @@ class isrf(galaxy):
 
         cellgas                 =   self.cell_data.save_dataframe()
  
-        print(self.cell_data.df.x.max())
         L_bol_sun = self._add_bol_lum()
         if p.verbose: print('Bolometric luminosity: %.4e Lsun' % self.L_bol_sun)
         GR.edit_item(self.name,'L_bol_sun',self.L_bol_sun)
@@ -1383,7 +1379,6 @@ class isrf(galaxy):
         L_FIR_sun = self._add_FIR_lum()
         if p.verbose: print('FIR luminosity: %.4e Lsun' % self.L_FIR_sun)
         GR.edit_item(self.name,'L_FIR_sun',self.L_FIR_sun)
-        print(self.name)
  
         cellgas                 =   self.cell_data.save_dataframe()
 
@@ -1472,8 +1467,6 @@ class isrf(galaxy):
         N_start,N_stop = aux.FIR_index(wavelengths)
 
         # Convert to solar luminosity
-        #print(F_W_m2_micron[N_start:N_stop])
-        #print('AAAAAA',F_W_m2_micron[N_start:N_stop].max())
         F_FIR_W_m2 = np.trapz(F_W_m2_micron[N_start:N_stop],x=wavelengths[N_start:N_stop])
         L_FIR_W = F_FIR_W_m2*4*np.pi*(self.distance*1e6*p.pc2m)**2
         L_FIR_sun = L_FIR_W/p.Lsun
