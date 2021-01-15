@@ -447,12 +447,7 @@ class cell_data:
 
         return(result)
 
-    #def _get_line_lum(self):
-    #    p = copy.copy(params)
-    #    df_or                   =   self.get_dataframe()
-    #    GR                      =   glo.global_results()
-    #    GR.edit_item(self.gal_ob.name,'max_nH',np.max(df_or.nH))
-    def _get_line_lum(self):
+    def _do_interpolation(self):
         """ Interpolate in Cloudy look-up table for line luminosities
         """
 
@@ -935,7 +930,6 @@ class cell_data:
 
         self.df             =   df
 
-
     def _add_metallicity(self):
         """ Add metallicity on cloud scale to cell dataframe, 
         using kernel smoothing of nearest particles.
@@ -1112,16 +1106,6 @@ class cell_data:
         df['sound_speed']   =   np.sqrt(adiabatic_index*p.kB*T_cold_gas/m_molecule)/1e3 # km/s
 
         self.df   =   df
-
-    # def _add_Mach_number(self):
-    #     """ Add Mach number
-    #     """
-
-    #     df                  =   self.get_dataframe()
-
-    #     df['Mach']          =   df['vel_disp_cloud']/df['sound_speed']
-
-    #     self.df   =   df
 
 #---------------------------------------------------------------------------
 ### FOR ISRF TASK ###
@@ -1343,8 +1327,6 @@ class isrf(galaxy):
         (SED instrument), and save SKIRT grid for further use in SIGAME.
         """
 
-        print('\n- Read and save SKIRT output - for galaxy # %i' % self.gal_index)
-
         p = copy.copy(params)
         
         # Select distance to put galaxy
@@ -1489,7 +1471,6 @@ class isrf(galaxy):
 
         p = copy.copy(params)
         
-        print(p.d_skirt+'%s%s_xy_sed.dat' % (self._get_name(),select))
         data = pd.read_csv(p.d_skirt+'%s%s_xy_sed.dat' % (self._get_name(),select),skiprows=7,sep=' ',engine='python',\
             names=['wavelength','tot','trans','direct_primary','scattered_primary',\
            'direct_secondary','scattered_secondary'])
@@ -1651,6 +1632,7 @@ class grid(galaxy):
             self.cell_data._add_data()
             self.cell_data._add_nH()
             self.cell_data.save_dataframe()
+            print('done with density for galaxy # %i (gal_num = %i)' % (self.gal_index,self.gal_num))
 
         if self.add_FUV_flux:
 
@@ -1695,24 +1677,6 @@ class grid(galaxy):
             self.cell_data._add_data()
             self.cell_data._add_Mach_number()
 
-            # Load gas and star particles
-            # self.parfticle_data._add_data(data_type='simgas')
-            # self.particle_data._add_data(data_type='simstar')
-
-            # Derive surface density of gas and stars
-            # self.particle_data._add_surface_density(data_type='simgas')
-            # self.particle_data._add_surface_density(data_type='simstar')
-            
-            # Derive vertical velocity dispersion of gas and stars
-            # self.particle_data._add_vertical_vel_disp(data_type='simgas')
-            # self.particle_data._add_vertical_vel_disp(data_type='simstar')
-
-            # Derive 3D velocity dispersion of gas
-            # self.particle_data._add_vel_disp(data_type='simgas')
-
-            # Save results
-            self.cell_data.save_dataframe()
-
         if self.add_f_H2:
 
             print('\n- Deriving f_H2 for all cells -')
@@ -1723,7 +1687,6 @@ class grid(galaxy):
             # Add f_H2 to cell data
             self.cell_data._add_f_H2()
             self.cell_data.save_dataframe()
-
 
 #---------------------------------------------------------------------------
 ### FOR INTERPOLATION TASK ###
@@ -1783,7 +1746,6 @@ def add_mw_quantities(**kwargs):
     GR.add_column('age_mw',age_mw)
     GR.add_column('Zstar_mw',Zstar_mw)
 
-
 class interpolation(galaxy):
     """
     An object that will interpolate in cloudy look-up tables for the line luminosities.
@@ -1824,7 +1786,7 @@ class interpolation(galaxy):
     def run(self):
 
         # Interpolate in Cloudy models
-        self.cell_data._get_line_lum()
+        self.cell_data._do_interpolation()
 
 #===========================================================================
 # FOR PAPER
