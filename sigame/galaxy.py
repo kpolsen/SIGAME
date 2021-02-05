@@ -1524,18 +1524,12 @@ class isrf(galaxy):
         if p.orientation in ['edge-on','xz','zx']: ext = '_xz_map'
         if p.orientation in ['yz','zy']: ext = '_yz_map'
 
-        print('cp %sskirt/' % p.d_XL_data + self._get_name() + '%s%s_total.fits' % (p.select,ext))
-        move = sub.Popen('cp %sskirt/' % p.d_XL_data + self._get_name() + '%s%s_total.fits' % (p.select,ext) + ' ' + \
-                         p.d_temp + self._get_name() + '%s%s_total.fits' % (p.select,ext), shell=True)
-        move.wait()
-        print(p.d_temp + self._get_name() + '%s%s_total.fits' % (p.select,ext))
-        image_file = get_pkg_data_filename(p.d_temp + self._get_name() + '%s%s_total.fits' % (p.select,ext))
-        image_data,hdr = fits.getdata(image_file, ext=0, header=True)
-        delete = sub.Popen('rm ' + p.d_temp + self._get_name() + '%s%s_total.fits' % (p.select,ext), shell=True)
-        image_data.shape
+        hdul = fits.open(p.d_XL_data + 'skirt/' + self._get_name() + p.select + '.fits')
+        wa = hdul[1].data.field(0)
+        image_data = hdul[0].data
+        units = hdul[0].header['BUNIT']
 
-        units = hdr['BUNIT']
-        return(image_data,units)
+        return(image_data,units,wa)
 
 #---------------------------------------------------------------------------
 ### FOR RE-GRIDDING TASK ###
@@ -1607,12 +1601,14 @@ class grid(galaxy):
         self.add_Mach_number        =   False
         #self.add_SFR_density        =   False
 
+        if self.add_nH: print('* Derive gas density (nH) for new cells for galaxy # %i' % self.gal_index)
         if self.add_FUV_flux: print('* Derive and add FUV (and other band) flux for galaxy # %i' % self.gal_index)
         if self.add_metallicity: print('* Derive and add metallicity for galaxy # %i' % self.gal_index)
         if self.add_SFR_density: print('* Derive and add SFR density for galaxy # %i' % self.gal_index)
         if self.add_Mach_number: print('* Derive and add velocity dispersion (or Mach number) for galaxy # %i' % self.gal_index)
         if self.add_FUV_flux + self.add_Mach_number + self.add_metallicity + self.add_SFR_density + self.add_nH == 0: 
             print('Do nothing! For galaxy # %i' % self.gal_index)
+        s = seg
 
     def run(self):
         """ Convert particle properties to cell grid
@@ -1656,7 +1652,7 @@ class grid(galaxy):
             # Add metallicity to cell data
             self.cell_data._add_SFR_density()
             self.cell_data.save_dataframe()
-            print('done with Z for galaxy # %i (gal_num = %i)' % (self.gal_index,self.gal_num))
+            print('done with SFR density for galaxy # %i (gal_num = %i)' % (self.gal_index,self.gal_num))
 
         if self.add_metallicity:
 
