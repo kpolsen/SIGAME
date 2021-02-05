@@ -1724,8 +1724,7 @@ def FUV_map(**kwargs):
         isrf_ob = gal.isrf(gal_index)
 
         # Load SKIRT output
-        image_data,units        =   isrf_ob._get_map_inst(orientation=p.orientation,select=p.select)
-        wa,bin_width            =   aux.read_map_inst_wavelengths(isrf_ob._get_name()+p.select)
+        image_data,units,wa     =   isrf_ob._get_map_inst(orientation=p.orientation,select=p.select)
         N_start,N_stop          =   aux.FUV_index(wa)
         FUV_xy_image            =   image_data[N_start:N_stop,:,:].sum(axis=0)
 
