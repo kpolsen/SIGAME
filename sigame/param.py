@@ -126,7 +126,8 @@ class read_params:
                                  'step3_complete_Cloudy',\
                                  'step3_read_Cloudy_grid',\
                                  'step3_make_Cloudy_table',\
-                                 'step4_interpolate']
+                                 'step4_interpolate',\
+                                 'step4_derived_results']
 
         file                =   open(params_file,'r', encoding="utf8")
         lc.clearcache()
@@ -162,9 +163,10 @@ class read_params:
         if self.step3_run_Cloudy:             print('- Run Cloudy')
         if self.step3_combine_Cloudy:         print('- Combine Cloudy otuput')
         if self.step3_complete_Cloudy:        print('- Complete Cloudy grid')
-        if self.step3_read_Cloudy_grid:       print('- Combine Cloudy ouptut, debug or read Cloudy grid')
+        if self.step3_read_Cloudy_grid:       print('- Combine Cloudy output, debug or read Cloudy grid')
         if self.step3_make_Cloudy_table:      print('- Sample Cloudy grid in look-up table')
         if self.step4_interpolate:            print('- Interpolate in cloudy look-up table for each gas cell')
+        if self.step4_derived_results:        print('- Add derived results to global results file')
 
         #===========================================================================
         """ Constants and variables used by SIGAME """
@@ -318,6 +320,7 @@ class read_params:
                                 bins=100,\
                                 box_size=100,\
 
+                                cb=False,\
                                 cell_type='',\
                                 classification='spherical',\
                                 cloudy_param={'ISM':2},\
@@ -345,8 +348,8 @@ class read_params:
                                 gal_ob={},\
                                 grid_Z = np.arange(-2,0.51,0.5),\
                                 grid_nH = np.arange(-4,7.1,1),\
-                                grid_FUV = np.arange(-7,4.1,1),\
-                                grid_DTM = np.arange(-2,-0.19,0.2),\
+                                grid_FUV = np.arange(-7,4.1,2),\
+                                grid_DTM = np.arange(-2,-0.19,0.5),\
                         
                                 interp_params=['lognH','lognSFR','logZ','logFUV','logNH','logDTM'],\
                                 ISM_phase='',\

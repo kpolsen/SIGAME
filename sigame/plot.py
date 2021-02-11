@@ -551,7 +551,7 @@ def simple_plot(**kwargs):
         figname = kwargs['figname']
         figtype = 'png'
         if 'figtype' in kwargs: figtype = kwargs['figtype']
-        plt.savefig(figname+'.'+figtype, format=figtype, dpi=dpi) # .eps for paper!
+        plt.savefig(figname+'.'+figtype, format=figtype, dpi=250, facecolor='w') # .eps for paper!
 
     if 'show' in kwargs:
         plt.show(block=False)
@@ -937,7 +937,7 @@ def histos(**kwargs):
                 if name == '':
                     name = galname + '_' + data_type + '_' + quant
                 if not os.path.isdir(p.d_plot + 'histos/'): os.mkdir(p.d_plot + 'histos/')
-                plt.savefig(p.d_plot + 'histos/'+name+'.png', format='png', dpi=250) # .eps for paper!
+                plt.savefig(p.d_plot + 'histos/'+name+'.png', format='png', dpi=250, facecolor='w') # .eps for paper!
 
             # New figure?
             if p.add:
@@ -1033,7 +1033,7 @@ def map_cell_property(**kwargs):
                 figname = p.d_plot + 'cell_data/map_%s_%s_gals_%s_%i.png' % (p.prop,p.z1,p.orientation,fignum)
                 print('Saving in ' + figname)
                 # plt.tight_layout()
-                plt.savefig(figname, format='png', dpi=250)
+                plt.savefig(figname, format='png', dpi=250, facecolor='w')
                 fignum += 1
                 pdb.set_trace()
     else:
@@ -1059,7 +1059,7 @@ def map_cell_property(**kwargs):
 
         print('Saving in ' + p.d_plot + 'sim_data/map_%s_G%i.png' % (p.prop,p.gal_index))
         if not os.path.isdir(p.d_plot + 'cell_data/'): os.mkdir(p.d_plot + 'cell_data/')
-        plt.savefig(p.d_plot + 'cell_data/map_%s_G%i.png' % (p.prop,p.gal_index), format='png', dpi=250)
+        plt.savefig(p.d_plot + 'cell_data/map_%s_G%i.png' % (p.prop,p.gal_index), format='png', dpi=250, facecolor='w')
 
 def map_sim_property(**kwargs):
     """ Map a simulation property in 2D
@@ -1141,15 +1141,15 @@ def map_sim_property(**kwargs):
                 print('Saving in ' + p.d_plot + 'sim_data/map_%s_%s_gals_%i.%s' % (p.prop,p.z1,fignum,p.format))
                 # plt.tight_layout()
                 if not os.path.isdir(p.d_plot + 'sim_data/'): os.mkdir(p.d_plot + 'sim_data/')
-                plt.savefig(p.d_plot + 'sim_data/map_%s_%s_gals_%i.%s' % (p.prop,p.z1,fignum,p.format), format=p.format, dpi=250)
+                plt.savefig(p.d_plot + 'sim_data/map_%s_%s_gals_%i.%s' % (p.prop,p.z1,fignum,p.format), format=p.format, dpi=250, facecolor='w')
                 fignum += 1
 
     else:
         if p.add:
             fig, ax1 = plt.gcf(), p.ax
         if not p.add:
-            fig = plt.figure(figsize=(6,6))
-            ax1 = fig.add_axes([0.1, 0.01, 0.8, 0.8]) 
+            fig = plt.figure(figsize=(8,6))
+            ax1 = fig.add_axes([0.15, 0.15, 0.8, 0.8]) 
             ax1.axis('equal')
 
         gal_ob                  =   gal.galaxy(GR=GR, gal_index=p.gal_index)
@@ -1204,7 +1204,8 @@ def map_sim_property(**kwargs):
                 fontsize=14,transform=ax1.transAxes,color='white')
         if p.savefig:
             if not os.path.isdir(p.d_plot + 'sim_data/'): os.mkdir(p.d_plot + 'sim_data/')    
-            plt.savefig(p.d_plot + 'sim_data/map_%s_G%i.png' % (p.prop,p.gal_index), format=p.format, dpi=250)
+            plt.savefig(p.d_plot + 'sim_data/map_%s_G%i.png' % (p.prop,p.gal_index), \
+                format=p.format, dpi=250, facecolor='w')
 
     if not p.colorbar: return(im)
 
@@ -1505,16 +1506,8 @@ def Main_Sequence(**kwargs):
 
     method              =   p.method
     fig,ax              =   plt.subplots(figsize = (8,6))
-    ax.set_xlim([1e7,1e12])
-    ax.set_ylim([10**(-2),1e2])
-  
-    # Plot 25 Mpc box? 
-    if p.select == '_25Mpc':
-        GR = pd.read_pickle(p.d_data + 'results/z0_246gals_simba_25Mpc_arepoPDF')
-        sc = ax.scatter(GR.M_star.values,GR.SFR.values,\
-                marker='^',s=20,alpha=0.8,c=GR.Zsfr,label='Simba-25 galaxy sample',zorder=10)
-        print(GR.SFR.values.min(),GR.M_star.values.min())
 
+  
     # Plot current sample
     GR                  =   glo.global_results()
     M_star,SFR,Zsfr = getattr(GR,'M_star'),getattr(GR,'SFR'),getattr(GR,'Zsfr')
@@ -1525,24 +1518,14 @@ def Main_Sequence(**kwargs):
         Zsfr = Zsfr[indices]
         print('With MS selection criteria: only %i galaxies' % (len(M_star)))
     sc = ax.scatter(M_star,SFR,\
-            marker='o',s=20,alpha=0.8,c=Zsfr,label='Simba-100 galaxy sample',zorder=10)
-
-    # Plot all galaxies in simulation volume
-    df_all              =   pd.read_pickle(p.d_data + 'galaxy_selection/z0_all_galaxies%s' % p.sim_runs[0])
-    df_all1 = df_all[(df_all['SFR_'+method] > 0) & (df_all['SFR_'+method] != 1)]
-    # hb = ax.hexbin(df_all['M_star_'+method],df_all['SFR_'+method],xscale='log',yscale='log',\
-    #                         cmap='binary',lw=0,gridsize=70)
-    df_all              =   pd.read_pickle(p.d_data + 'galaxy_selection/z0_all_galaxies%s' % p.sim_runs[1])
-    df_all2 = df_all[df_all['SFR_'+method] > 0]
-    df_all = df_all1.append(df_all2, ignore_index=True)
-
-    hb = ax.hexbin(df_all2['M_star_'+method],df_all2['SFR_'+method],xscale='log',yscale='log',\
-                            cmap='binary',lw=0,gridsize=(50,70))
+            marker='o',s=50,alpha=0.8,c=Zsfr,label='Simba%s galaxy sample' % p.sim_run,zorder=10)
+    ax.set_xlim([M_star.min()/2,M_star.max()*2])
+    ax.set_ylim([SFR.min()/10,SFR.max()*10])
 
     # Plot observations
     if p.zred == 0:
         MS_salim = pd.read_csv('data/observations/MS/salim2018_ms_v1.dat',\
-                names=['logMstar','logsSFR','logsSFR_1','logsSFR_2'],sep='   ')
+                names=['logMstar','logsSFR','logsSFR_1','logsSFR_2'],sep='   ',engine='python')
         ax.fill_between(10.**MS_salim.logMstar,10.**MS_salim.logMstar*10.**MS_salim.logsSFR_1,\
                  10.**MS_salim.logMstar*10.**MS_salim.logsSFR_2,color='teal',alpha=0.3)
         ax.plot(10.**MS_salim.logMstar,10.**MS_salim.logMstar*10.**MS_salim.logsSFR,\
@@ -1568,9 +1551,11 @@ def Main_Sequence(**kwargs):
     handles = np.flip(handles)
     labels = np.flip(labels)
     ax.legend(handles,labels,fontsize=12)
+    ax.set_yscale('log')
+    ax.set_xscale('log')
     if p.savefig:
         if not os.path.isdir(p.d_plot + 'sim_data/'): os.mkdir(p.d_plot + 'sim_data/')    
-        plt.savefig('plots/sim_data/SFR_Mstar_%s_%s%s' % (method,p.sim_name,p.sim_run),dpi=200)
+        plt.savefig('plots/sim_data/SFR_Mstar_%s_%s%s' % (method,p.sim_name,p.sim_run),dpi=250,facecolor='w')
 
 def Mstar_function(**kwargs):
     """ Plots stellar mass function
@@ -1609,30 +1594,6 @@ def Mstar_function(**kwargs):
     plt.tight_layout()
     plt.show()
 
-def Mstar_SFR(**kwargs):
-
-    p = copy.copy(params)
-    for key,val in kwargs.items():
-        setattr(p,key,val)
-
-    if not p.xlim:
-        p.xlim              =   np.array([1e10,1e13])
-
-    GR                  =   glo.global_results()
-
-    Mstar               =   getattr(GR,'M_star')
-    SFR                 =   getattr(GR,'SFR')
-    SFR_MS              =   aux.MS_SFR_Mstar(p.xlim)
-
-    plot.simple_plot(x1=Mstar,y1=SFR,ma1='x',fill1=True,xlog=True,ylog=True,lab1='Simba galaxies',\
-        xlim=p.xlim,ylab=getlabel('lSFR'),xlab='log '+getlabel('M_star'))
-
-    plot.simple_plot(add=True,x1=p.xlim,y1=SFR_MS,ls1='--',lab1='Speagle+14')
-
-    if p.savefig:
-        if not os.path.isdir(p.d_plot + 'sim_data/'): os.mkdir(p.d_plot + 'sim_data/')    
-        plt.savefig(p.d_plot + 'sim_data/Mstar_SFR_%s.png' % (p.z1), format='png', dpi=250)
-
 #---------------------------------------------------------------------------
 ### FOR ISRF TASK ###
 #---------------------------------------------------------------------------
@@ -1655,19 +1616,20 @@ def star_map(**kwargs):
     gal_ob              =   gal.galaxy(GR=GR, gal_index=p.gal_index)
 
     simstar             =   aux.load_temp_file(gal_ob=gal_ob,data_type='simstar')
-    # simstar             =   simstar[np.abs(simstar.z) < 2].reset_index(drop=True)
-    simstar             =   simstar[simstar.age < 10**p.vmax/1e9] # only younger than 1 Gyr
+    if not p.vmax: p.vmax = np.max(simstar.age)
+    if not p.vmin: p.vmin = np.min(simstar.age)
+    simstar             =   simstar[simstar.age < p.vmax] # only younger than 1 Gyr
     simstar             =   simstar.sort_values('age',ascending=False)
     m                   =   np.log10(simstar.m.values)
 
-    m                   =   (m - m.min())/(m.max() - m.min()) * 300 + 50
+    m                   =   (m - m.min())/(m.max() - m.min()) * 100 + 50
 
     if p.add:
         ax1                 =   p.ax
     else:
         # fig, ax1            =   plt.subplots(figsize=(7.3, 6  ))
-        fig = plt.figure(figsize=(6,6.15))
-        ax1 = fig.add_axes([0.1, 0.01, 0.8, 0.8]) 
+        fig = plt.figure(figsize=(8,6))
+        ax1 = fig.add_axes([0.15, 0.15, 0.8, 0.8]) 
 
     print('Range in stellar age [Myr]: ',np.min(simstar.age*1e3),np.max(simstar.age*1e3))
 
@@ -1687,7 +1649,7 @@ def star_map(**kwargs):
 
     if p.savefig:
         if not os.path.isdir(p.d_plot + 'sim_data/'): os.mkdir(p.d_plot + 'sim_data/')    
-        plt.savefig(p.d_plot + 'sim_data/star_map_G%i.png' % (p.gal_index), format=p.format, dpi=250)
+        plt.savefig(p.d_plot + 'sim_data/star_map_G%i.png' % (p.gal_index), format=p.format, dpi=250, faceolor='w')
 
     if not p.colorbar: return(sc)
 
@@ -1748,7 +1710,7 @@ def FUV_map(**kwargs):
 
         if p.savefig:
             if not os.path.isdir(p.d_plot + 'cell_data/'): os.mkdir(p.d_plot + 'cell_data/')    
-            plt.savefig(p.d_plot + 'cell_data/FUV_map_%s%s.png' % (isrf_ob._get_name(),p.select), format=p.format, dpi=250)
+            plt.savefig(p.d_plot + 'cell_data/FUV_map_%s%s.png' % (isrf_ob._get_name(),p.select), format=p.format, dpi=250, facecolor='w')
         
     if not p.colorbar: return(im)
 
@@ -1817,7 +1779,7 @@ def FUV_fluxes(**kwargs):
 
     if p.savefig:
         if not os.path.isdir(p.d_plot + 'luminosity/'): os.mkdir(p.d_plot + 'luminosity/')    
-        plt.savefig(p.d_plot + 'luminosity/FUV_fluxes_comp.png', format=p.format, dpi=250)
+        plt.savefig(p.d_plot + 'luminosity/FUV_fluxes_comp.png', format=p.format, dpi=250, facecolor='w')
 
 def FUV_lums(**kwargs):
 
@@ -1862,7 +1824,7 @@ def FUV_lums(**kwargs):
 
     if p.savefig:
         if not os.path.isdir(p.d_plot + 'luminosity/'): os.mkdir(p.d_plot + 'luminosity/')    
-        plt.savefig(p.d_plot + 'luminosity/FUV_lums_comp.png', format=p.format, dpi=250)
+        plt.savefig(p.d_plot + 'luminosity/FUV_lums_comp.png', format=p.format, dpi=250, facecolor='w')
         
 def FUV_crosssec(**kwargs):
     '''Plots FUV cross-section from SKIRT output for selected galaxies
@@ -1942,7 +1904,7 @@ def FUV_crosssec(**kwargs):
 
         if p.savefig:
             if not os.path.isdir(p.d_plot + 'cell_data/'): os.mkdir(p.d_plot + 'cell_data/')    
-            plt.savefig(p.d_plot + 'cell_data/FUV_crosssec_%s.png' % (isrf_ob._get_name()), format=p.format, dpi=250)
+            plt.savefig(p.d_plot + 'cell_data/FUV_crosssec_%s.png' % (isrf_ob._get_name()), format=p.format, dpi=250, facecolor='w')
     
     if not p.colorbar: return(im)
 
@@ -2035,7 +1997,7 @@ def L_TIR_SFR(**kwargs):
     if p.ylim: ax.set_ylim(p.ylim)
 
     if not os.path.isdir(p.d_plot + 'luminosity/'): os.mkdir(p.d_plot + 'luminosity/')    
-    plt.savefig(p.d_plot + 'luminosity/L_TIR_SFR.png', format='png', dpi=250)
+    plt.savefig(p.d_plot + 'luminosity/L_TIR_SFR.png', format='png', dpi=250, facecolor='w')
 
 def all_skirt_spectra(**kwargs):
     '''Plots all spectra from SKIRT
@@ -2113,28 +2075,28 @@ def all_skirt_spectra(**kwargs):
     ax.plot([13.6,13.6],ax.get_ylim(),'--k')
     ax.legend()
     if not os.path.isdir(p.d_plot + 'cell_data/'): os.mkdir(p.d_plot + 'cell_data/')    
-    plt.savefig(p.d_plot + 'cell_data/skirt_spectra_%s.png' % (gal_ob.name), format='png', dpi=250)
+    plt.savefig(p.d_plot + 'cell_data/skirt_spectra_%s.png' % (gal_ob.name), format='png', dpi=250, facecolor='w')
 
     fig,ax = plt.subplots(figsize=(10,8))
     ax.hist(np.log10(R_NIR_FUV[R_NIR_FUV > 0]),bins=200)
     ax.set_xlabel(r'log NIR-to-FUV flux ratio')
     ax.set_ylabel(r'log fraction of cells')
     ax.set_yscale('log')
-    plt.savefig(p.d_plot + 'cell_data/skirt_R_NIR_FUV_%s_no_Z.png' % (gal_ob.name), format='png', dpi=250)
+    plt.savefig(p.d_plot + 'cell_data/skirt_R_NIR_FUV_%s_no_Z.png' % (gal_ob.name), format='png', dpi=250, facecolor='w')
 
 
     fig,ax = plt.subplots(figsize=(10,8))
     ax.hist(np.log10(UV_to_FUV[UV_to_FUV > 0]),bins=200)
     ax.set_ylabel(r'log UV-to-FUV flux ratio')
     ax.set_yscale('log')
-    plt.savefig(p.d_plot + 'cell_data/skirt_UV_to_FUV_%s.png' % (gal_ob.name), format='png', dpi=250)
+    plt.savefig(p.d_plot + 'cell_data/skirt_UV_to_FUV_%s.png' % (gal_ob.name), format='png', dpi=250, facecolor='w')
 
     fig,ax = plt.subplots(figsize=(10,8))
     ax.hist(np.log10(R_NIR_FUV[R_NIR_FUV > 0]),bins=200,weights=cell_data.m[R_NIR_FUV > 0])
     ax.set_xlabel(r'log NIR-to-FUV flux ratio')
     ax.set_ylabel(r'log mass-weighted fraction of cells')
     ax.set_yscale('log')
-    plt.savefig(p.d_plot + 'cell_data/skirt_R_NIR_FUV_%s_mw.png' % (gal_ob.name), format='png', dpi=250)
+    plt.savefig(p.d_plot + 'cell_data/skirt_R_NIR_FUV_%s_mw.png' % (gal_ob.name), format='png', dpi=250, facecolor='w')
 
 
     pdb.set_trace()
@@ -2174,7 +2136,7 @@ def three_PDF_plots(res='M51_200pc',table_exts=[''],**kwargs):
     ax1.legend(loc='upper right',fontsize=10)
 
     if not os.path.isdir(p.d_plot + 'cell_data/PDFs/'): os.mkdir(p.d_plot + 'cell_data/PDFs/')    
-    plt.savefig(p.d_plot + 'cell_data/PDFs/simple_PDF_%s%s%s_x3.png' % (p.sim_name,p.sim_run,p.table_ext), format='png', dpi=250)
+    plt.savefig(p.d_plot + 'cell_data/PDFs/simple_PDF_%s%s%s_x3.png' % (p.sim_name,p.sim_run,p.table_ext), format='png', dpi=250, facecolor='w')
 
 def PDF(gal_index,**kwargs):
     """ Plot total galactic PDF
@@ -2346,7 +2308,7 @@ def PDF(gal_index,**kwargs):
         ax2.set_xlim([1e-4,1e5])
      
         if not os.path.isdir(p.d_plot + 'cell_data/PDFs/'): os.mkdir(p.d_plot + 'cell_data/PDFs/')    
-        plt.savefig(p.d_plot + 'cell_data/PDFs/PDF_%s%s_%s.png' % (gal_ob.name,p.table_ext,res), format='png', dpi=250)
+        plt.savefig(p.d_plot + 'cell_data/PDFs/PDF_%s%s_%s.png' % (gal_ob.name,p.table_ext,res), format='png', dpi=250, facecolor='w')
 
     labels = {'_M10':'Mach = 10','_arepoPDF':'AREPO parametrized PDF'}
 
@@ -2372,7 +2334,7 @@ def PDF(gal_index,**kwargs):
         ax2.text(0.4,0.1,'Mass fraction at nH > 1e3: %.1f %%' % (100*np.sum(total_PDF[lognHs >= 3])),\
                  transform=ax1.transAxes,fontsize=15,bbox=dict(facecolor='white', alpha=0.7))
     if not os.path.isdir(p.d_plot + 'cell_data/PDFs'): os.mkdir(p.d_plot + 'cell_data/PDFs')    
-    if not p.add: plt.savefig(p.d_plot + 'cell_data/PDFs/simple_PDF_%s%s_%s.png' % (gal_ob.name,p.table_ext,res), format='png', dpi=250)
+    if not p.add: plt.savefig(p.d_plot + 'cell_data/PDFs/simple_PDF_%s%s_%s.png' % (gal_ob.name,p.table_ext,res), format='png', dpi=250, facecolor='w')
 
     # pdb.set_trace()
 
@@ -2576,7 +2538,7 @@ def cell_properties(**kwargs):
         plt.tight_layout()
 
         if not os.path.isdir(p.d_plot + 'cell_data/'): os.mkdir(p.d_plot + 'cell_data/')    
-        plt.savefig(p.d_plot + 'cell_data/%s_for_Cloudy.png' % gal_ob.name, format='png', dpi=250)
+        plt.savefig(p.d_plot + 'cell_data/%s_for_Cloudy.png' % gal_ob.name, format='png', dpi=250, facecolor='w')
 
         ################### Derived in post-process
 
@@ -2632,7 +2594,7 @@ def cell_properties(**kwargs):
 
         # ax1.set_xlabel('log('+getlabel('vel_disp_gas')+')')
 
-        # plt.savefig(p.d_plot + 'cell_data/properties_SKIRT_post.png', format='png', dpi=250)
+        # plt.savefig(p.d_plot + 'cell_data/properties_SKIRT_post.png', format='png', dpi=250, facecolor='w')
 
 #---------------------------------------------------------------------------
 ### FOR INTERPOLATION TASK ###
@@ -2695,7 +2657,7 @@ def sim_params(x,y,**kwargs):
         ax.plot(10**binned_x_c,10**binned_y,color='green',lw=4)
         print(binned_y)
     if not os.path.isdir(p.d_plot + 'sim_data/'): os.mkdir(p.d_plot + 'sim_data/')    
-    plt.savefig('plots/sim_data/%s%s_sim_params_%s_%s_%s.png' % (p.sim_name,p.sim_run,p.z1,x,y),dpi=250)
+    plt.savefig('plots/sim_data/%s%s_sim_params_%s_%s_%s.png' % (p.sim_name,p.sim_run,p.z1,x,y),dpi=250, facecolor='w')
 
 def cell_params(x,y,**kwargs):
     """ Plot contour map of cell properties for comparison with Cloudy look-up table parameters.
@@ -2787,7 +2749,7 @@ def cell_params(x,y,**kwargs):
         ax.plot(ax.get_xlim(),[10.**y1,10.**y1],'--k',alpha=0.7)
 
     if not os.path.isdir(p.d_plot + 'cell_data/'): os.mkdir(p.d_plot + 'cell_data/')    
-    plt.savefig('plots/cell_data/%s%s_cell_params_%s_%s_%s.png' % (p.sim_name,p.sim_run,p.z1,x,y),dpi=250)
+    plt.savefig('plots/cell_data/%s%s_cell_params_%s_%s_%s.png' % (p.sim_name,p.sim_run,p.z1,x,y),dpi=250, facecolor='w')
 
 def cloudy_table_map(x_index='lognHs',y_index='lognSFRs',**kwargs):
     """ Plot a 2D map in Cloudy look-up tables.
@@ -3230,7 +3192,7 @@ def compare_runs(names,labnames,**kwargs):
  
     if p.savefig:
         if not os.path.isdir(p.d_plot + 'luminosity/'): os.mkdir(p.d_plot + 'luminosity/')    
-        plt.savefig(p.d_plot + 'luminosity/std_runs%s' % p.select,dpi=250)
+        plt.savefig(p.d_plot + 'luminosity/std_runs%s' % p.select,dpi=250, facecolor='w')
 
 def compare_CII_w_models(**kwargs):
     """ Plot line - SFR relation with other models
@@ -3451,7 +3413,6 @@ def resolution_test(names,labnames,**kwargs):
         if not os.path.isdir(p.d_plot + 'luminosity/'): os.mkdir(p.d_plot + 'luminosity/')    
         plt.savefig(p.d_plot + 'luminosity/compare_Simba100_w_Simba25.png', format='png', dpi=300) # .eps for paper!
 
-
 def map_line(**kwargs):
     """ Map surface brightness of one line.
 
@@ -3542,16 +3503,36 @@ def line_sSFR_array(lines,**kwargs):
 
 def line_SFR(**kwargs):
     """ Plot line luminosity (in Lsun) against SFR
+
+    Parameters
+    ----------
+
+    line: str
+        Name of line to be used, must be one of "lines" in parameters.txt, default: '[CII]158'.
+
+    select: str
+        What simulated galaxy symbols will be colored by, default: 'Sigma_M_H2'.
+        Options are: 
+            - 'Sigma_M_H2': surface density of molecular gas
+            - 'F_FUV_mw': mass-weighted FUV flux in G0
+            - 'Zsfr': SFR_weighted metallicity
+        
+    cb: bool
+        Whether of not to show colorbar, default = False.
+
+    savefig: bool
+        Whether or not to save figure, default = False.
+
     """
 
     p = copy.copy(params)
     for key,val in kwargs.items():
         setattr(p,key,val)
-
+    if p.select == '': p.select = 'Sigma_M_H2'
     GR                  =   glo.global_results(sim_run=p.sim_run,nGal=p.nGal)
     
     marker              =   'o'
-    if p.sim_run == p.sim_runs[0]: marker = '^'
+    if p.sim_run == p.sim_runs[1]: marker = '^'
 
     L_line              =   getattr(GR,'L_'+p.line+'_sun')#[380:400]#[0:100]
     SFR                 =   getattr(GR,'SFR')#[380:400]#[0:100]
@@ -3560,15 +3541,6 @@ def line_SFR(**kwargs):
     R_gas               =   getattr(GR,'R2_gas')#[380:400]#[0:100]
     M_H2                =   getattr(GR,'M_H2_R2_gas')#[380:400]#[0:100]
     print(len(L_line[L_line > 0]))
-    # if 'CO' in p.line: p.select = 'Sigma_M_H2'
-
-    # Take only MS galaxies?
-    if p.select == '_MS':
-        indices = aux.select_salim18(GR.M_star,GR.SFR)
-        L_line = L_line[indices]
-        SFR = SFR[indices]
-        Zsfr = Zsfr[indices]
-        print('With MS selection criteria: only %i galaxies' % (len(L_line)))
 
     SFR = SFR[L_line > 0]
     Zsfr = Zsfr[L_line > 0]
@@ -3597,8 +3569,8 @@ def line_SFR(**kwargs):
         print(M_H2.min(),Sigma_M_H2.min())
         print(M_H2.max(),Sigma_M_H2.max())
 
-        m = ax.scatter(lSFR[np.argsort(Sigma_M_H2)],lL_line[np.argsort(Sigma_M_H2)],marker=marker,s=20,\
-                   c=np.log10(Sigma_M_H2[np.argsort(Sigma_M_H2)]),vmin=-2.5,vmax=2.2,label=lab,alpha=0.6,zorder=10)
+        m = ax.scatter(lSFR[np.argsort(Sigma_M_H2)],lL_line[np.argsort(Sigma_M_H2)],marker=marker,s=60,\
+                   c=np.log10(Sigma_M_H2[np.argsort(Sigma_M_H2)]),vmin=-2.5,vmax=2.2,label=lab,alpha=0.7,zorder=10)
         if p.cb:
             cbar = plt.colorbar(m,ax=ax)
             cbar.set_label(label=r'log $\Sigma_{H2}$ [M$_{\odot}$/pc$^2$]',size=15)
@@ -3620,7 +3592,7 @@ def line_SFR(**kwargs):
     #     if SFR[i] > 0:
     #         ax.text(SFR[i],L_line[i],'G%i' % GR.gal_num[i],fontsize=7)
 
-    if p.add_obs:
+    if p.add_obs & p.zred == 0:
         add_line_SFR_obs(p.line,L_line,ax,select=p.select)
 
     ax.set_xlabel('log ' + getlabel('SFR'))
@@ -3752,7 +3724,7 @@ def line_FIR(**kwargs):
     m = ax.scatter(GR.L_FIR_sun[0:n],L_line[0:n],marker='o',s=20,\
                c=GR.Zsfr[0:n],label=lab,alpha=0.6,zorder=10)
 
-    if p.add_obs:
+    if p.add_obs & p.zred == 0:
         add_line_FIR_obs(p.line,ax)
 
     m = ax.scatter(GR.L_FIR_sun/1e6,L_line/1e6,marker='o',s=30,c=GR.Zsfr)
@@ -4542,7 +4514,7 @@ def moment0_map(gal_index,quant='m', res=0.5, plane='xy', units='Jy', **kwargs):
     #pdb.set_trace()
     try:
         momentmap = np.load(location, allow_pickle=True)
-        print('Found stored momentmap data')
+        print('Found stored momentmap data at:')
         print(location)
     except:
         print('Did not find stored momentmap data - creating')
@@ -4608,8 +4580,8 @@ def moment0_map(gal_index,quant='m', res=0.5, plane='xy', units='Jy', **kwargs):
     if p.add:
         fig,ax = plt.gcf(),p.ax
     else:
-        fig = plt.figure(figsize=(6,6.15))
-        ax = fig.add_axes([0.1, 0.01, 0.8, 0.8]) 
+        fig = plt.figure(figsize=(8,6))
+        ax = fig.add_axes([0.15, 0.15, 0.8, 0.8]) 
         ax.axis('equal')
 
     if not p.R_max:
@@ -4621,12 +4593,12 @@ def moment0_map(gal_index,quant='m', res=0.5, plane='xy', units='Jy', **kwargs):
         grid = np.rot90(grid)
     gal_ob          =   gal.galaxy(p.gal_index)
     cell_data       =   gal_ob.cell_data.get_dataframe()
-    coords_sim      =   cell_data[['x','y','z']].values
-    r = np.sqrt(np.sum(coords_sim * coords_sim, axis=1))
-    cs = ax.imshow(grid, extent=(-np.max(r), np.max(r), -np.max(r), np.max(r)), norm=LogNorm(), \
+    extent          =   np.max(np.abs(cell_data[['x','y','z']].values))
+    cs = ax.imshow(grid, extent=(-extent, extent, -extent, extent), norm=LogNorm(), \
                 vmin=p.vmin, vmax=p.vmax, interpolation='nearest', cmap=p.cmap)
-    ax.set_xlim([-p.R_max,p.R_max])
-    ax.set_ylim([-p.R_max,p.R_max])
+    if p.R_max: extent = p.R_max
+    ax.set_xlim([-extent,extent])
+    ax.set_ylim([-extent,extent])
 
     if num == 0:
         #plt.title('mass density')
@@ -4642,8 +4614,8 @@ def moment0_map(gal_index,quant='m', res=0.5, plane='xy', units='Jy', **kwargs):
     if num == 5: 
         labels = 'log FUV flux (G$_{0}$)'
 
-    if not p.add: plt.xlabel(plane[0].upper()+' (kpc)')
-    if not p.add: plt.ylabel(plane[1].upper()+' (kpc)')
+    if not p.add: plt.xlabel(plane[0]+' [kpc]')
+    if not p.add: plt.ylabel(plane[1]+' [kpc]')
 
     formatter = mpl.ticker.LogFormatterExponent(10, labelOnlyBase=False, minor_thresholds=(100,20))
     if p.legend: 
@@ -4653,7 +4625,9 @@ def moment0_map(gal_index,quant='m', res=0.5, plane='xy', units='Jy', **kwargs):
     
     if p.savefig:
         if not os.path.isdir(p.d_plot + 'moment0/'): os.mkdir(p.d_plot + 'moment0/')    
-        plt.savefig(p.d_plot + 'moment0/moment0_%i%s%s' % (p.gal_index,p.sim_name,p.sim_run) + '_' + plane + '_res' + str(res) +'_'+ quant.replace('(','').replace(')','') + '.png',dpi=500)
+        plt.savefig(p.d_plot + 'moment0/moment0_%i%s%s' % \
+            (p.gal_index,p.sim_name,p.sim_run) + '_' + plane + '_res' + str(res) +'_'+ quant.replace('(','').replace(')','') + \
+            '.png',dpi=500,facecolor='w')
 
     #if p.add: return(cbar)
 
