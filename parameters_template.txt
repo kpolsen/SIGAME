@@ -47,7 +47,7 @@ Lines to be calculated [lines] (must match lines in sigame.Cloudy_modeling.py)
 Select grid run ('': default,'_ext':added max NH attenuation to spectra for lognH > 4,_dim2':spectra dimmed by factor 2) [grid_ext]
 
 
-Select table setting ('M10': Mach number = 10, '_arepoPDF': parametrized PDF) [table_ext]
+Select table setting ('_M10': Mach number = 10, '_arepoPDF': parametrized PDF) [table_ext]
 _arepoPDF
 
 ----------------------------------------------------
@@ -103,6 +103,5 @@ BACKEND TASKS
 -1 step3_read_Cloudy_grid
 -1 step3_make_Cloudy_table
 -1 step4_interpolate
-
-
+-1 step4_derived_results
 

@@ -376,7 +376,7 @@ class global_results:
                 ['Name','Gas mass','Molecular mass', 'f_mol','mw-Z','SFR-Z'],\
                 ['','[10^10 Msun]','[10^10 Msun]','[%]','[Zsun]','[Zsun]'],\
                 ['s','e','e','f','f','f'],\
-                [GR.galnames, GR.M_gas/1e10, GR.M_mol/1e10,GR.M_mol/GR.M_gas*100.,GR.Zmw,GR.Zsfr]
+                [GR.galnames, GR.M_gas/1e10, GR.M_H2/1e10,GR.M_H2/GR.M_gas*100.,GR.Zmw,GR.Zsfr]
                 )
         except:
             print('cannot print ISM properties yet')

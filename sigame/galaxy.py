@@ -479,18 +479,14 @@ class cell_data:
         df_or['DTM'] = DTM
 
         # Make sure we don't go outside of grid:
-        if p.sim_name == 'enzo':
+        #if p.sim_name == 'enzo':
             # TEST !!!
-            df_or['SFR_density'] = 1
-            df_or['nSFR'] = 1
+            #df_or['SFR_density'] = 1
+            #df_or['nSFR'] = 1
         df                      =   df_or.copy()[['nH','Z','G0','R_NIR_FUV','nSFR','DTM']]
         #if p.sim_name == 'simba':
         #    print('TEST!! new nSFR values')
         #    df['SFR_density']       =   df.nSFR.values/(0.2**3)
-        print(np.min(df.nSFR.values))
-        print(np.max(df.nSFR.values))
-        print(np.min(df.nH.values))
-        print(np.max(df.nH.values))
        
         # TEST !!!
         #df.nH                   =   df.nH.values*0. + 10**(-4)
@@ -571,6 +567,10 @@ class cell_data:
         cell_prop_new['mf_1e1_grid'] = self._interpolate_cloudy_table(lookup_table,'mf_1e1',cell_prop)
         print('G%i - mass fraction at nH > 1e3 cm^-3: %.3e %% ' % (self.gal_ob.gal_index,np.sum(cell_prop_new.m * cell_prop_new.mf_1e3_grid)/np.sum(cell_prop_new.m)*100.))
 
+        ### TEMPERATURE
+        cell_prop_new['Te_mw'] = self._interpolate_cloudy_table(lookup_table,'Te_mw',cell_prop)
+        cell_prop_new['Tk_mw'] = self._interpolate_cloudy_table(lookup_table,'Tk_mw',cell_prop)
+
         ### CO-DISSOCIATING FLUX
         #cell_prop_new['F_NUV_ergs_cm2_s'] = self._interpolate_cloudy_table(lookup_table,'F_NUV_ergs_cm2_s',cell_prop)
 
@@ -579,7 +579,7 @@ class cell_data:
         cell_prop_new['mf_HII_grid'] = self._interpolate_cloudy_table(lookup_table,'mf_HII',cell_prop)
         cell_prop_new['mf_HI_grid'] = self._interpolate_cloudy_table(lookup_table,'mf_HI',cell_prop)
         cell_prop_new['ne_grid'] = self._interpolate_cloudy_table(lookup_table,'ne',cell_prop)
-        cell_prop_new['ne_mw_grid'] = self._interpolate_cloudy_table(lookup_table,'ne_mw',cell_prop)
+        cell_prop_new['ne_mw'] = self._interpolate_cloudy_table(lookup_table,'ne_mw',cell_prop)
         GR.edit_item(self.gal_ob.name,'M_H2',np.sum( cell_prop_new['mf_H2_grid'] * cell_prop_new['m']  ))
         GR.edit_item(self.gal_ob.name,'M_HII',np.sum( cell_prop_new['mf_HII_grid'] * cell_prop_new['m']  ))
         GR.edit_item(self.gal_ob.name,'M_HI',np.sum( cell_prop_new['mf_HI_grid'] * cell_prop_new['m']  ))
@@ -590,22 +590,16 @@ class cell_data:
         GR.edit_item(self.gal_ob.name,'M_HII_R2_gas',np.sum( cell_prop_new['mf_HII_grid'][r < R2_gas] * cell_prop_new['m'][r < R2_gas] ))
         GR.edit_item(self.gal_ob.name,'M_HI_R2_gas',np.sum( cell_prop_new['mf_HI_grid'][r < R2_gas] * cell_prop_new['m'][r < R2_gas] ))
 
+        ### PRESSURE
+        cell_prop_new['P_HII'] =   cell_prop_new['Te_mw']*cell_prop_new['ne_mw']   
+        cell_prop_new['P_gas'] =   cell_prop_new['Tk_mw']*cell_prop_new['nH']   
+
         self.df                 =   cell_prop_new
         self.save_dataframe()
 
-        ### ADD TO GLOBAL RESULTS
-        M_1e3                   =   np.sum(cell_prop_new.m.values*cell_prop_new.mf_1e3_grid.values)
-        M_1e1                   =   np.sum(cell_prop_new.m.values*cell_prop_new.mf_1e1_grid.values)
-        GR.edit_item(self.gal_ob.name,'M_1e3',M_1e3)
-        GR.edit_item(self.gal_ob.name,'M_1e1',M_1e1)
-        GR.edit_item(self.gal_ob.name,'max_nH',np.max(df_or.nH))
-
-        print(cell_prop_new['L_[CII]158'].values.min())
-        print(cell_prop_new['L_[CII]158'].values.max())
-
+        ### ADD LUMINOSITIES TO GLOBAL RESULTS
         for target in p.lines:
             line_lum                =   np.sum(cell_prop_new['L_'+target].values)
-            print('G%i - %s: %.2e Lsun' % (self.gal_ob.gal_index,target,line_lum))
             GR                      =   glo.global_results()
             GR.edit_item(self.gal_ob.name,'L_%s_sun' % target,line_lum)
 
@@ -1608,7 +1602,6 @@ class grid(galaxy):
         if self.add_Mach_number: print('* Derive and add velocity dispersion (or Mach number) for galaxy # %i' % self.gal_index)
         if self.add_FUV_flux + self.add_Mach_number + self.add_metallicity + self.add_SFR_density + self.add_nH == 0: 
             print('Do nothing! For galaxy # %i' % self.gal_index)
-        s = seg
 
     def run(self):
         """ Convert particle properties to cell grid
@@ -1710,6 +1703,15 @@ def add_mw_quantities(**kwargs):
 
     GR                      =   glo.global_results(verbose=True)
 
+    cloudy_library = clo.library()
+    lookup_table = cloudy_library._restore_lookup_table()
+    lognHs = np.unique(lookup_table.lognHs)
+    lognSFRs = np.unique(lookup_table.lognSFRs)
+    logNHs = np.unique(lookup_table.logNHs)
+    logFUVs = np.unique(lookup_table.logFUVs)
+    logZs = np.unique(lookup_table.logZs)
+    logDTMs = np.unique(lookup_table.logDTMs)
+
     G0_mw = np.zeros(GR.N_gal)
     nH_mw = np.zeros(GR.N_gal)
     h_min = np.zeros(GR.N_gal)
@@ -1718,6 +1720,16 @@ def add_mw_quantities(**kwargs):
     M_dust_DTM = np.zeros(GR.N_gal)
     age_mw = np.zeros(GR.N_gal)
     Zstar_mw = np.zeros(GR.N_gal)
+    M_1e3 = np.zeros(GR.N_gal)
+    M_1e1 = np.zeros(GR.N_gal)
+    nH_cell_max = np.zeros(GR.N_gal)
+    cell_size_min = np.zeros(GR.N_gal)
+    cell_size_max = np.zeros(GR.N_gal)
+    P_HII_mw = np.zeros(GR.N_gal)
+    P_gas_mw = np.zeros(GR.N_gal)
+    ne_mw = np.zeros(GR.N_gal)
+    Te_mw = np.zeros(GR.N_gal)
+    Tk_mw = np.zeros(GR.N_gal)
     for i in range(GR.N_gal):
         gal_ob = galaxy(gal_index = i)
         df = gal_ob.particle_data.get_dataframe('simgas')
@@ -1729,9 +1741,57 @@ def add_mw_quantities(**kwargs):
         df = gal_ob.particle_data.get_dataframe('simgas')
         h_min[i] = np.min(df.h.values)
         M_dust_DTM[i] = np.sum(df.m.values*df.Z.values*p.mf_Z1*0.5)
+        # stars
         df = gal_ob.particle_data.get_dataframe('simstar')
         age_mw[i] = np.sum(df.age.values*df.m.values)/np.sum(df.m.values)
         Zstar_mw[i] = np.sum(df.Z.values*df.m.values)/np.sum(df.m.values)
+        # cell data
+        df = gal_ob.cell_data.get_dataframe()
+        df_or = df.copy()
+        # Check DTM values for nans...
+        DTM = df.DTM.values
+        DTM[np.isnan(DTM)] = 10.**np.min(logDTMs)
+        DTM[DTM == 0] = 1e-30
+        df                      =   df_or.copy()[['nH','Z','G0','R_NIR_FUV','nSFR','DTM']]
+        df.Z[np.isnan(df.Z)]    =   1e-6 # because something weird comes out from Z evaluation step
+        df.nSFR[df.nSFR == 0]    =   1e-30 
+        df.nSFR[np.isnan(df.nSFR)]    =   -30 
+        # IMPORTANT: Taking the log of the entire dataframe and re-naming columns
+        df                      =   np.log10(df)
+        #print(np.min(df.DTM),np.max(df.DTM))
+        df = df.rename(columns={'nH':'lognH','Z':'logZ','G0':'logFUV','nSFR':'lognSFR','DTM':'logDTM'})
+        # Convert NIR/FUV ratio to column density NH
+        logNH_cl,R_NIR_FUV_cl = aux.get_NH_from_cloudy()
+        R_NIR_FUV_df = df_or.R_NIR_FUV.values
+        interp                  =   interp1d(np.log10(R_NIR_FUV_cl)[8::],logNH_cl[8::],fill_value='extrapolate',kind='slinear')
+        df['logNH']             =   interp(np.log10(R_NIR_FUV_df))
+        df['logNH'][df.logNH <= np.min(logNH_cl)] = np.min(logNH_cl)
+        df['logNH'][df.logNH >= np.max(logNH_cl)] = np.max(logNH_cl)
+        df['logNH'][np.isinf(R_NIR_FUV_df)] = np.max(logNH_cl)
+        for _ in p.interp_params:
+            df[_][df[_] <= np.min(lookup_table[_+'s'].values)] = np.min(lookup_table[_+'s'].values) + 1e-6 * np.abs(np.min(lookup_table[_+'s']))
+            df[_][df[_] >= np.max(lookup_table[_+'s'].values)] = np.max(lookup_table[_+'s'].values) - 1e-6 * np.abs(np.min(lookup_table[_+'s']))
+ 
+        # Cell properties used for interpolation in cloudy grid models:
+        #print('Now column-stacking relevant cell data')
+        cell_prop               =   np.column_stack((df.lognH.values,df.lognSFR.values,df.logNH.values,df.logFUV.values,df.logZ.values,df.logDTM.values))        
+        df_or['Te_mw'] = gal_ob.cell_data._interpolate_cloudy_table(lookup_table,'Te_mw',cell_prop)
+        df_or['Tk_mw'] = gal_ob.cell_data._interpolate_cloudy_table(lookup_table,'Tk_mw',cell_prop)
+        df_or['P_HII'] = df_or['Te_mw'].values*df_or['ne_mw_grid'].values
+        df_or['P_gas'] = df_or['Tk_mw'].values*df_or['nH'].values
+        gal_ob.cell_data.df                 =   df_or
+        gal_ob.cell_data.save_dataframe()
+        df = gal_ob.cell_data.get_dataframe()
+        M_1e3[i] = np.sum(df.m.values*df.mf_1e3_grid.values)
+        M_1e1[i] = np.sum(df.m.values*df.mf_1e1_grid.values)
+        nH_cell_max[i] = np.max(df.nH)
+        cell_size_min[i] = np.min(df.cell_size)
+        cell_size_max[i] = np.max(df.cell_size)
+        ne_mw[i] = np.sum(df_or.ne_mw_grid*df.mf_HII_grid*df.m)/np.sum(df.mf_HII_grid*df.m)
+        Te_mw[i] = np.sum(df_or.Te_mw*df.mf_HII_grid*df.m)/np.sum(df.mf_HII_grid*df.m)
+        Tk_mw[i] = np.sum(df_or.Tk_mw*df.mf_HII_grid*df.m)/np.sum(df.mf_HII_grid*df.m)
+        P_HII_mw[i] = np.sum(df.P_HII*df.mf_HII_grid*df.m)/np.sum(df.mf_HII_grid*df.m)
+        P_gas_mw[i] = np.sum(df.P_gas*df.m)/np.sum(df.m)
 
     GR.add_column('G0_mw',G0_mw)
     GR.add_column('nH_cell_mw',nH_mw)
@@ -1741,6 +1801,16 @@ def add_mw_quantities(**kwargs):
     GR.add_column('M_dust_DTM',M_dust_DTM)
     GR.add_column('age_mw',age_mw)
     GR.add_column('Zstar_mw',Zstar_mw)
+    GR.add_column('M_1e3',M_1e3)
+    GR.add_column('M_1e1',M_1e1)
+    GR.add_column('nH_cell_max',nH_cell_max)
+    GR.add_column('cell_size_min',cell_size_min)
+    GR.add_column('cell_size_max',cell_size_max)
+    GR.add_column('ne_mw',ne_mw)
+    GR.add_column('Te_mw',Te_mw)
+    GR.add_column('Tk_mw',Tk_mw)
+    GR.add_column('P_HII_mw',P_HII_mw)
+    GR.add_column('P_gas_mw',P_gas_mw)
 
 class interpolation(galaxy):
     """
