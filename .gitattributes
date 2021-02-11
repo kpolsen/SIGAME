@@ -1,2 +1,5 @@
 look-up-tables/cloudy/lookup_table_z0_arepoPDF filter=lfs diff=lfs merge=lfs -text
 look-up-tables/cloudy/grid_table_z0 filter=lfs diff=lfs merge=lfs -text
+data/cell_data/z0.00_15_simba_25Mpc.cell_data filter=lfs diff=lfs merge=lfs -text
+data/cell_data/z0.00_51_simba_25Mpc.cell_data filter=lfs diff=lfs merge=lfs -text
+data/cell_data/z0.00_78_simba_25Mpc.cell_data filter=lfs diff=lfs merge=lfs -text
