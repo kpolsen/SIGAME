@@ -4594,8 +4594,8 @@ def moment0_map(gal_index,quant='m', res=0.5, plane='xy', units='Jy', **kwargs):
     gal_ob          =   gal.galaxy(p.gal_index)
     cell_data       =   gal_ob.cell_data.get_dataframe()
     extent          =   np.max(np.abs(cell_data[['x','y','z']].values))
-    cs = ax.imshow(grid, extent=(-extent, extent, -extent, extent), norm=LogNorm(), \
-                vmin=p.vmin, vmax=p.vmax, interpolation='nearest', cmap=p.cmap)
+    cs = ax.imshow(grid, extent=(-extent, extent, -extent, extent), norm=LogNorm(vmin=p.vmin, vmax=p.vmax), \
+                interpolation='nearest', cmap=p.cmap)
     if p.R_max: extent = p.R_max
     ax.set_xlim([-extent,extent])
     ax.set_ylim([-extent,extent])
@@ -4620,8 +4620,7 @@ def moment0_map(gal_index,quant='m', res=0.5, plane='xy', units='Jy', **kwargs):
     formatter = mpl.ticker.LogFormatterExponent(10, labelOnlyBase=False, minor_thresholds=(100,20))
     if p.legend: 
         if not p.label: labels = ''
-    print(p.legend,labels)
-    cbar = fig.colorbar(cs, cmap=p.cmap, label=labels, pad=0, shrink=0.85)#0.5)#
+    cbar = fig.colorbar(cs, label=labels, pad=0, shrink=0.85)#0.5)#
     
     if p.savefig:
         if not os.path.isdir(p.d_plot + 'moment0/'): os.mkdir(p.d_plot + 'moment0/')    

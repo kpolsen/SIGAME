@@ -25,3 +25,4 @@ slurm-*
 are-save.o*
 snap.o*
 .nfs*
+plots/*

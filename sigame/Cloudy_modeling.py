@@ -183,7 +183,7 @@ class library:
         ext = ''
 
         # Load and put transmitted continuum in separate files and calculate FUV flux
-        cont2 = pd.read_table(p.d_cloudy + 'NH/grid_run_ext.cont2',skiprows=1,names=['E','I_trans','coef'])
+        cont2 = pd.read_table(p.d_table + 'cloudy/NH/grid_run_ext.cont2',skiprows=1,names=['E','I_trans','coef'])
         E = cont2.E.values
         i_shift = np.array(['########################### GRID_DELIMIT' in _ for _ in E])
         i_delims = np.arange(len(cont2))[i_shift == True]
@@ -193,14 +193,14 @@ class library:
         F_FUV_G0 = np.zeros([len(i_delims)])
         F_FUV_G0_wrong = np.zeros([len(i_delims)])
         F_NUV_ergs_cm2_s = np.zeros([len(i_delims)])
-        with open(p.d_cloudy + 'NH/grid_run_ext.cont2','r') as f:
+        with open(p.d_table + 'cloudy/NH/grid_run_ext.cont2','r') as f:
             all_lines = f.readlines()
 
             for i,i_delim in enumerate(i_delims):
          
                 # Start writing input radiation field with correct header
                 output_template          =   open(p.d_cloudy + 'table_%i.cont2' % i,'w')
-                con_header               =   open(p.d_cloudy + 'NH/cont2_header.txt','r')
+                con_header               =   open(p.d_table + 'cloudy/NH/cont2_header.txt','r')
                 for line in con_header.readlines():
                     output_template.write(line)
              
@@ -229,7 +229,7 @@ class library:
         # Save scalings to get 1 G0
         scale_factor = 1/F_FUV_G0
        
-        out = open(p.d_cloudy + 'NH/grid_run_ext.out','r')
+        out = open(p.d_table + 'cloudy/NH/grid_run_ext.out','r')
         exts = []
         Zs_ext = []
         start = False
@@ -303,7 +303,7 @@ class library:
                         # Save NUV
                         F_NUV_grid_ergs_cm2_s[i]=   F_NUV_ergs_cm2_s[i_NH] * scale_table 
 
-                        input_template          =   open(p.d_cloudy + 'template_grid_run%s.in' % ext,'r')
+                        input_template          =   open(p.d_table + 'cloudy/template_grid_run%s.in' % ext,'r')
                         input_copy              =   open(p.d_cloudy + 'grid_run_%i%s.in' % (i,ext),'w')
                         for line in input_template:
                      
@@ -389,7 +389,7 @@ class library:
         number_of_batches = int(np.floor(N_grids)/batch_size)
      
         for j in range(0,number_of_batches):
-            input_template          =   open(p.d_cloudy + 'PBS_template.pbs','r')
+            input_template          =   open(p.d_table + 'cloudy/PBS_template.pbs','r')
             input_copy              =   open(p.d_cloudy + 'PBS_script_%i.pbs' % j,'w')
             for line in input_template:
                 input_copy.write(line)
@@ -641,10 +641,9 @@ class library:
         print('Missing: ',len(indices))
         N_grids = len(indices)
         number_of_batches = int(np.floor(N_grids)/batch_size)
-        s = aegsg
 
         for j in range(number_of_batches):
-            input_template          =   open(p.d_cloudy + 'PBS_template.pbs','r')
+            input_template          =   open(p.d_table + 'cloudy/PBS_template.pbs','r')
             input_copy              =   open(p.d_cloudy + 'PBS_script_%i.pbs' % j,'w')
             for line in input_template:
                 input_copy.write(line)
