@@ -1,0 +1,69 @@
+title ### One cell grid model for Cloudy in SIGAME ###
+##
+## ---------------------------------------------------
+##
+## CELL setup
+##
+## Stop after 1 zone
+stop zone 1
+## 
+## ---------------------------------------------------
+##
+## GRID setup
+##  
+## Density
+hden -4 log vary
+grid <hden> 
+#ncpus 50
+## 
+## Metallicity [in local ISM units]
+#abundances ISM no grains
+metals <metals> log
+## 
+## Element abundances
+element scale factor helium <helium>
+element scale factor carbon <carbon>
+element scale factor nitrogen <nitrogen>
+element scale factor oxygen <oxygen>
+element scale factor neon <neon>
+element scale factor magnesium <magnesium>
+element scale factor silicon <silicon>
+element scale factor sulphur <sulphur>
+element scale factor calcium <calcium>
+element scale factor iron <iron>
+##
+## DTM: scale grains to match selected DTM values
+grains <grains> linear function sublimation
+##
+## FUV field
+table read "<table>" scale <scale> log
+#ncpus 50
+## CR ionization rate scaling with FUV field:
+cosmic ray rate <CR> log
+##
+## ---------------------------------------------------
+##
+## OTHER settings
+## 
+CMB, z=0
+database H2
+iterate to convergence 
+stop temperature 3 linear
+set temperature floor 3 linear
+stop AV 100
+## 
+## ---------------------------------------------------
+##
+## SAVE commands
+## save the grid points, the value of the ionization parameter of each model 
+save grid ".grd" last no hash
+## Save overview
+save overview ".ovr" last
+## save intensities of selected lines
+save line list ".lin" "LineList.dat" absolute emergent last no hash
+## save hydrogen conditions
+save hydrogen conditions ".hyd" last
+## save temperatures
+set WeakHeatCool 0.9
+save heating ".heat" last
+#save element oxygen ".oxy" last
