@@ -1514,11 +1514,11 @@ class isrf(galaxy):
         for key,val in kwargs.items():
             setattr(p,key,val)
 
-        if p.orientation in ['face-on','xy','yx']: ext = '_xy_map'
-        if p.orientation in ['edge-on','xz','zx']: ext = '_xz_map'
-        if p.orientation in ['yz','zy']: ext = '_yz_map'
+        if p.orientation in ['face-on','xy','yx']: ext = '_xy_map_total'
+        if p.orientation in ['edge-on','xz','zx']: ext = '_xz_map_total'
+        if p.orientation in ['yz','zy']: ext = '_yz_map_total'
 
-        hdul = fits.open(p.d_XL_data + 'skirt/' + self._get_name() + p.select + '.fits')
+        hdul = fits.open(p.d_XL_data + 'skirt/' + self._get_name() + p.select + ext + '.fits')
         wa = hdul[1].data.field(0)
         image_data = hdul[0].data
         units = hdul[0].header['BUNIT']
