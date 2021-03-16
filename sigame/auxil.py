@@ -502,10 +502,7 @@ def get_NH_from_cloudy(logZ=0):
     p = copy.copy(params)
 
     # READ TRANSMITTED SPECTRA FROM CLOUDY GRD
-    if p.grid_ext == '_ext':
-        p.d_cloudy = p.d_cloudy.replace('ext/','')
-        print(p.d_cloudy)
-    cont2 = pd.read_table(p.d_cloudy+'NH/grid_run_ext.cont2',skiprows=0,names=['E','I_trans','coef'])
+    cont2 = pd.read_table(p.d_table+'cloudy/NH/grid_run_ext.cont2',skiprows=0,names=['E','I_trans','coef'])
     E = cont2.E.values
     i_shift = np.array(['########################### GRID_DELIMIT' in _ for _ in E])
     i_delims = np.arange(len(cont2))[i_shift == True]
@@ -516,7 +513,7 @@ def get_NH_from_cloudy(logZ=0):
         cont[i,:] = I_trans
 
     # READ METALLICITIES AND COLUMN DENSITIES
-    out = open(p.d_cloudy+'NH/grid_run_ext.out','r')
+    out = open(p.d_table+'cloudy/NH/grid_run_ext.out','r')
     logNHs = []
     logZs = []
     start = False

@@ -1,6 +1,7 @@
 parameters.txt
 parameters.bk
 data/results/**
+data/cell_data/**
 cloudy_test/**
 cloudy/**
 look-up-tables/cloudy/input/**
