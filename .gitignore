@@ -3,6 +3,7 @@ parameters.bk
 data/results/**
 cloudy_test/**
 cloudy/**
+!cloudy/NH/**
 look-up-tables/cloudy/input/**
 look-up-tables/cloudy/output/**
 look-up-tables/cloudy/old/**
@@ -25,3 +26,4 @@ slurm-*
 are-save.o*
 snap.o*
 .nfs*
+plots/**
