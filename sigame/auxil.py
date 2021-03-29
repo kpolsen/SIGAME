@@ -645,16 +645,18 @@ def convert_cell_data_to_regular_grid(res=0.5,plane='xy',**kwargs):
     datacube['m_H2']   =  datacube.m*datacube.mf_H2_grid
     datacube['m_HII']  =  datacube.m*datacube.mf_HII_grid
     datacube['m_HI']   =  datacube.m*datacube.mf_HI_grid
-    properties = np.column_stack((datacube.m, datacube.m_H2, datacube.m_HI, datacube.m_HII, \
-                                  datacube.m * datacube.Z, datacube.m * datacube.G0,  datacube.m * datacube.ne_mw_grid,\
-                                  datacube['L_[CII]158']/6, datacube['L_[CI]610']/6,\
-                                  datacube['L_[CI]370']/6, datacube['L_[OI]145']/6, datacube['L_[OI]63']/6, datacube['L_[OIII]88']/6,\
-                                  datacube['L_[NII]122']/6, datacube['L_[NII]205']/6, datacube['L_CO(3-2)']/6, datacube['L_CO(2-1)']/6,\
-                                  datacube['L_CO(1-0)']/6, datacube['L_[OIV]25']/6, datacube['L_[NeII]12']/6, datacube['L_[NeIII]15']/6,\
-                                  datacube['L_[SIII]18']/6, datacube['L_[FeII]25']/6,\
-                                  datacube['L_H2_S(1)']/6, datacube['L_H2_S(2)']/6, datacube['L_H2_S(3)']/6, datacube['L_H2_S(4)']/6,\
-                                  datacube['L_H2_S(5)']/6, datacube['L_H2_S(6)']/6, datacube['L_H2_S(7)']/6))
+    # CAREFUL! Order here must correspond to dictionary in param.py
+    properties = np.column_stack((datacube.m, datacube.m_H2, datacube.m_HI, datacube.m_HII,\
+                                  datacube.m * datacube.Z, datacube.m * datacube.G0,\
+                                  datacube.m * datacube.ne_mw,datacube.m_HI * datacube.ne_HI_mw,\
+                                  datacube.m_HII * datacube.ne_HII_mw,datacube.m_H2 * datacube.ne_H2_mw,\
+                                  datacube.m_HII * datacube.Te_mw, datacube.m * datacube.Tk_mw))
 
+    for line in p.lines:
+        properties = np.column_stack((properties,datacube['L_%s' % line]/6,\
+                                  datacube['L_%s_HII' % line]/6,\
+                                  datacube['L_%s_HI' % line]/6,\
+                                  datacube['L_%s_H2' % line]/6))
     
     print('Max x: ',datacube.x.max())
     cellsize = datacube.cell_size                     # (Cell-sizes in kpc)                         
@@ -670,12 +672,10 @@ def convert_cell_data_to_regular_grid(res=0.5,plane='xy',**kwargs):
     zminindex, zmaxindex = np.where(Z == zmin)[0][0], np.where(Z == zmax)[0][0]
     
     cellarea = cellsize * cellsize                     # kpc^2
-    area = np.column_stack((cellarea, cellarea, cellarea, cellarea, cellarea, cellarea, cellarea, cellarea, \
-                   cellarea, cellarea, cellarea, cellarea, cellarea, cellarea, cellarea, cellarea,\
-                   cellarea, cellarea, cellarea, cellarea, cellarea, cellarea, cellarea, cellarea,\
-                   cellarea, cellarea, cellarea, cellarea, cellarea, cellarea))
+    area = cellarea
+    for _ in range(len(p.moment0_dict.keys())-1):
+        area = np.column_stack((area,cellarea))
     celldensity =  properties / area                   # units / kpc^2
-    
     
     if plane == 'xy':
         axis1, min1, max1, minindex1, maxindex1 = X, xmin, xmax, xminindex, xmaxindex
@@ -688,7 +688,6 @@ def convert_cell_data_to_regular_grid(res=0.5,plane='xy',**kwargs):
     elif plane == 'xz':
         axis1, min1, max1, minindex1, maxindex1 = X, xmin, xmax, xminindex, xmaxindex
         axis2, min2, max2, minindex2, maxindex2 = Z, zmin, zmax, zminindex, zmaxindex
-        
         
     # Cell setups: 
     cellstart1 = axis1 - (cellsize / 2)
@@ -704,7 +703,6 @@ def convert_cell_data_to_regular_grid(res=0.5,plane='xy',**kwargs):
     tree = cKDTree(np.c_[axis1.ravel(), axis2.ravel()])
     R = (max(cellsize)/(2**0.5)) + (res/(2**0.5)) + 0.1
     
-
     # While loop to go through axis2-direction:
     index = 0
     index2 = 0
@@ -743,7 +741,7 @@ def convert_cell_data_to_regular_grid(res=0.5,plane='xy',**kwargs):
 
         index2 += 1
         pixelstart2 += res
-        
+
     momentmap = np.array(momentmapdata)
     momentmap = np.append(momentmap, [['pixel size', index1, index2, 0]], axis=0) # Information of image size in pixel
         
