@@ -154,7 +154,7 @@ def interpolate(GR):
 
     print('\n--- Step 4: Interpolate for line luminosities ---')
 
-    gal_indices = np.arange(GR.N_gal) #380,400)#
+    gal_indices = np.arange(GR.N_gal) 
     
     if p.N_cores > 1:
         agents = p.N_cores
@@ -166,8 +166,13 @@ def interpolate(GR):
             print('\nNow for galaxy # %s' % gal_index)
             gal.run_interp(gal_index)
 
-    # Add mass-weighted quantities to global results
+def derived_results(GR):
+    """ Adds derived mass-weighted and other quantities to global results file, 
+    using particle and cell data.
+    """
+
     gal.add_mw_quantities()
+
 
 
     

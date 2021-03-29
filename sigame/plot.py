@@ -1487,7 +1487,7 @@ def stamp_collection(**kwargs):
             print('Saving in ' + p.d_plot + 'sim_data/%s%s_map_%s_%s_gals_%i.png' % (p.sim_name,p.sim_run,p.prop,p.z1,fignum))
             # plt.tight_layout()
             if not os.path.isdir(p.d_plot + 'sim_data/'): os.mkdir(p.d_plot + 'sim_data/')    
-            plt.savefig(p.d_plot + 'sim_data/%s%s_map_%s_%s_gals_%i.png' % (p.sim_name,p.sim_run,p.prop,p.z1,fignum), format='png', dpi=250)
+            plt.savefig(p.d_plot + 'sim_data/%s%s_map_%s_%s_gals_%i.png' % (p.sim_name,p.sim_run,p.prop,p.z1,fignum), format='png', dpi=250, facecolor='w')
             counter = N_stamps_1 * N_stamps_2
             fignum += 1
             plt.close('all')
@@ -1511,6 +1511,8 @@ def Main_Sequence(**kwargs):
     # Plot current sample
     GR                  =   glo.global_results()
     M_star,SFR,Zsfr = getattr(GR,'M_star'),getattr(GR,'SFR'),getattr(GR,'Zsfr')
+    print(M_star)
+    print(SFR)
     if p.select == '_MS':
         indices = aux.select_salim18(GR.M_star,GR.SFR)
         M_star = M_star[indices]
@@ -1540,6 +1542,7 @@ def Main_Sequence(**kwargs):
         fit_speagle = 10.**((0.84-0.026*t)*np.log10(ax.get_xlim())-(6.51-0.11*t))
         # Convert from Kroupa to Chabrier:  https://ned.ipac.caltech.edu/level5/March14/Madau/Madau3.html
         ax.plot(ax.get_xlim(),fit_speagle*0.63/0.67,':',color='grey',label='[Speagle+14] "mixed" fit')
+        print(fit_speagle*0.63/0.67)
   
 
 
@@ -1633,6 +1636,7 @@ def star_map(**kwargs):
 
     print('Range in stellar age [Myr]: ',np.min(simstar.age*1e3),np.max(simstar.age*1e3))
 
+    print(simstar.age.max())
     sc = ax1.scatter(simstar.x,simstar.y,s=m,c=np.log10(simstar.age*1e9),alpha=0.6,cmap='jet',vmin=p.vmin,vmax=p.vmax)
     # ax1.plot(simstar.x,simstar.y,'o',ms=1)
     if p.colorbar: plt.colorbar(sc,shrink=0.6,ax=ax1,label='log stellar age [yr]')
@@ -1649,7 +1653,7 @@ def star_map(**kwargs):
 
     if p.savefig:
         if not os.path.isdir(p.d_plot + 'sim_data/'): os.mkdir(p.d_plot + 'sim_data/')    
-        plt.savefig(p.d_plot + 'sim_data/star_map_G%i.png' % (p.gal_index), format=p.format, dpi=250, faceolor='w')
+        plt.savefig(p.d_plot + 'sim_data/star_map_G%i.png' % (p.gal_index), format=p.format, dpi=250, facecolor='w')
 
     if not p.colorbar: return(sc)
 
@@ -2443,7 +2447,7 @@ def cell_properties(**kwargs):
 
         plt.tight_layout()
 
-        # plt.savefig(p.d_plot + 'cell_data/properties_SKIRT.png', format='png', dpi=250)
+        # plt.savefig(p.d_plot + 'cell_data/properties_SKIRT.png', format='png', dpi=250, facecolor='w')
 
 
         ################### Cell properties for look-up table interpolation
