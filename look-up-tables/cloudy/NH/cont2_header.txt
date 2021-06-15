@@ -1,8 +1,0 @@
-#
-                        20190210 # file format version number
-84817611d73e3994894b737ae2ee61e8 # check 1
-               3e2a1c48 4833a3e1 # check 2
-               415c099a 1fc45ae9 # check 3
-               3ff00000 00000000 # check 4
-         -1.0000000000000000e+00 # radius, -1 if not set
-                            8228 # nflux

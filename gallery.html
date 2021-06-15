@@ -1,0 +1,182 @@
+<!DOCTYPE HTML>
+<!--
+	Twenty by HTML5 UP
+	html5up.net | @ajlkn
+	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
+<html>
+	<head>
+		<title>SIGAME</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
+		<script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+		<!-- <link rel="stylesheet" href="/home/karen/Documents/homepage/lightbox2-master/dist/css/lightbox.min.css"> -->
+	</head> 
+	<body class="no-sidebar is-preload">
+		<div id="page-wrapper">
+
+			<!-- Header -->
+				<header id="header">
+					<h1 id="logo"><a href="index.html">SIGAME <span>:: project site ::</span></a></h1>
+					<nav id="nav">
+						<ul>
+							<li class="current"><a href="index.html">Welcome</a></li>
+							<li class="submenu">
+								<a href="#">Menu</a>
+								<ul>
+									<li><a href="team.html">The team</a></li>
+									<li><a href="gallery.html">Gallery</a></li>
+									<li><a href="code.html">Obtaining the code</a></li>
+									<li><a href="contact.html">Contact</a></li>
+									<!-- <li class="submenu">
+										<a href="#">Submenu</a>
+										<ul>
+											<li><a href="#">Dolore Sed</a></li>
+											<li><a href="#">Consequat</a></li>
+											<li><a href="#">Lorem Magna</a></li>
+											<li><a href="#">Sed Magna</a></li>
+											<li><a href="#">Ipsum Nisl</a></li> 
+										</ul>
+									</li>-->
+								</ul>
+							</li>
+							<!-- <li><a href="#" class="button primary">Sign Up</a></li> -->
+						</ul>
+					</nav>
+				</header>
+
+			<!-- Main -->
+				<article id="main">
+
+					<header class="special container">
+						<span class="icon fa-photo"></span>
+						<h2>Gallery</h2>
+						<p>A quick view at what can be done with SIGAME</p>
+					</header>
+
+					<!-- One -->
+						<section class="wrapper style1 container special">
+							<div class="row">
+
+								<div class="col-4 col-12-narrower">
+									<section>
+									    <!-- <div>
+								      		<a class="example-image-link" href="images/cii.png" data-lightbox="example-1"><img class="example-image" src="images/cii.png" alt="[CII] moment0 map at z~0" width="75%"/></a>
+									    </div> -->
+										<a class="gray" href="images/cii.png"><img src="images/cii.png" alt="" width="90%"/></a>
+										<header>
+											<h3>Line moment0 maps</h3>
+										</header>
+										<p>SIGAME can present the line emission from a galaxy in a space-velocity datacube format, which can be integrated in velocity to generate moment 0 maps such as the one in above for a z~0 merger in [CII].
+										</p>
+									</section>
+								</div>
+
+								<div class="col-4 col-12-narrower">
+									<section>
+									    <div>
+								      		<a class="gray" href="images/cii_map_resolved.png"><img src="images/cii_map_resolved.png" alt="[CII] moment0 map at z~0 with Herschel resolved resolved areas overlaid on top." width="90%"/></a>
+									    </div>
+										<!-- <img src="images/cii_map_resolved.png" alt="" width="400"/> -->
+										<header>
+											<h3>Synthetic resolved observations</h3>
+										</header>
+										<p>By convolving a line emission map by the know beam size and shape of an instrument, a synthetic map can be generated and areas within a galaxy can be compared. In the figure above, this is done for a z~0 galaxy in [CII] emission, where the small yellow circles correspond to areas that Herschel would have been able to distinguish.
+										</p>
+									</section>
+								</div>
+
+								<div class="col-4 col-12-narrower">
+									<section>
+										<a class="gray" href="images/radial_profile.png"><img src="images/radial_profile.png" alt="" width="90%"/></a>
+										<header>
+											<h3>Radial profiles</h3>
+										</header>
+										<p>The radial profile in [CII] emission is calculated for different ISM phases (GMCs vs diffuse gas) by integrating the datacube in circular annuli around the center of the galaxy.
+										</p>
+									</section>
+								</div>
+
+								<div class="col-4 col-12-narrower">
+									<section>
+									    <div>
+								      		<a class="example-image-link" href="images/diagnostic.png" data-lightbox="example-1"><img class="example-image" src="images/diagnostic.png" alt="A diagnostic plot for the density and FUV flux in the ISM are connected to the [OIII]/[CII] line ratios for a group of z~0 galaxies. The overall mass-weighted values for density and FUV are shown as crosses." width="90%"/></a>
+									    </div>
+										<!-- <a href="#" class="image featured"><img src="images/diagnostic.png" alt="" /></a> -->
+										<header>
+											<h3>Line ratio diagnostic plots</h3>
+										</header>
+										<p>In order to compare with resolved observations of multiple lines, we are working on producing diagnostic contour maps, that can be used to convert line ratios into e.g. density and Far-UV flux (G0), as shown in the above figure.
+										</p>
+									</section>
+								</div>
+
+
+								<div class="col-4 col-12-narrower">
+									<section>
+										<a class="gray" href="https://vimeo.com/237511261"><img src="images/movie.png" alt="" width="90%"/></a>
+										<header>
+											<h3>Stop motion through a galaxy</h3>
+										</header>
+										<p>Movie made by scanning through the velocity channels of a datacube for a z~6 galaxy, revealing the dynamics of a rotating disk.
+										</p>
+									</section>
+								</div>
+
+							</div>
+						</section>
+
+					<!-- Two -->
+						<section class="wrapper style4 container">
+
+							<!-- Content -->
+								<div class="content">
+									<section>
+										<header>
+											<h3>Table output</h3>
+										</header>
+										<p>In addition, SIGAME will take your galaxy (or galaxy sample) and collect numbers on galaxy global properties such as SFR, stellar mass, ISM mass, SFR-weighted metallicity etc. in one table stored as a dictionary. Then, line luminosities can be derived and added to that table for further use. However, the real power of SIGAME lies in the <strong>resolved spectral datacubes</strong> that can be converted into line profiles, line maps and much more, as shown above.
+										</p>
+									</section>
+								</div>
+
+						</section>
+
+				</article>
+
+			<!-- Footer -->
+				<footer id="footer">
+
+					<ul class="icons">
+						<!-- <li><a href="#" class="icon circle fa-twitter"><span class="label">Twitter</span></a></li> -->
+						<!-- <li><a href="#" class="icon circle fa-facebook"><span class="label">Facebook</span></a></li> -->
+						<!-- <li><a href="#" class="icon circle fa-google-plus"><span class="label">Google+</span></a></li> -->
+						<li><a href="https://github.com/kpolsen/SIGAME/releases" class="icon circle fa-github"><span class="label">Github</span></a></li>
+						<!-- <li><a href="#" class="icon circle fa-dribbble"><span class="label">Dribbble</span></a></li> -->
+					</ul>
+
+					<ul class="copyright">
+						<li>&copy; Untitled</li><li>Design: <a href="http://html5up.net">HTML5 UP</a></li>
+					</ul>
+
+				</footer>
+
+		</div>
+
+		<!-- Scripts -->
+			<script src="assets/js/jquery.min.js"></script>
+			<script src="assets/js/jquery.dropotron.min.js"></script>
+			<script src="assets/js/jquery.scrolly.min.js"></script>
+			<script src="assets/js/jquery.scrollgress.min.js"></script>
+			<script src="assets/js/jquery.scrollex.min.js"></script>
+			<script src="assets/js/browser.min.js"></script>
+			<script src="assets/js/breakpoints.min.js"></script>
+			<script src="assets/js/util.js"></script>
+			<script src="assets/js/main.js"></script>
+			<!-- <script src="/home/karen/Documents/homepage/lightbox2-master/dist/js/lightbox-plus-jquery.js"></script> -->
+			<!-- <script src="/js/jquery.min.js"></script> -->
+			{% include lightbox.html %}
+	</body>
+</html>
