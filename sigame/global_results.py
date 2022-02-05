@@ -23,12 +23,10 @@ import astropy.units as u
 global params
 params              =   aux.load_parameters()
 
-# Needs update: why does Zsfr turn out nan sometimes?
 class global_results:
-    '''An object referring to the global results of a selection of galaxies, containing global properties of as attributes.
+    '''
+    A class to handle the properties of an entire galaxy sample, containing global galaxy properties as attributes.
 
-    Example
-    -------
     >>> import global_results as glo
     >>> GR = glo.global_results()
     >>> GR.print_results()
@@ -42,10 +40,6 @@ class global_results:
 
         # get global results DataFrame
         GR                      =   self._get_file(**kwargs)
-
-        # print(GR.keys())
-        # print(GR[['gal_num','SFR','M_gas','Zsfr','L_[CII]158_sun']][GR.gal_num == 9749])
-        # print(GR[['gal_num','SFR','M_gas','Zsfr','L_[CII]158_sun']][GR.gal_num == 515])
 
         # add DF entries to global_results instance
         for key in GR:
@@ -67,7 +61,6 @@ class global_results:
             print(filename)
 
         # create file if it doesn't exist
-        #f = pd.read_pickle(filename)
         if not os.path.isfile(filename):
             print("\ncould not find file at %s \n... creating Global Results file!" % filename)
             if p.sim_name == 'simba': self.__create_selection_from_simba(**kwargs)
@@ -81,6 +74,9 @@ class global_results:
         return pd.read_pickle(filename)
 
     def __get_file_location(self,**kwargs):
+        """
+        Returns file location of current global results file.
+        """
 
         p = copy.copy(params)
 
@@ -88,10 +84,12 @@ class global_results:
             setattr(p,key,val)
 
         file_location   =   p.d_data + 'results/%s_%sgals_%s%s%s' % (p.z1,p.nGal,p.sim_name,p.sim_run,p.grid_ext+p.table_ext)
-        #print(file_location)
         return file_location
 
     def __create_selection_from_simba(self,**kwargs):
+        """
+        Creates initial global results file from Simba simulation data alone.
+        """
 
         p = copy.copy(params)
 
@@ -203,7 +201,9 @@ class global_results:
         return GR
 
     def __set_attr(self,GR_int,attr):
-        # Get missing attributes
+        """
+        Derives and sets additional attributes
+        """
 
         p = copy.copy(params)
 
@@ -232,6 +232,9 @@ class global_results:
         return(GR_int)
 
     def __create_selection_from_enzo(self,**kwargs):
+        """
+        Creates initial global results file from ENZO simulation data alone.
+        """
 
         p = copy.copy(params)
 
@@ -286,6 +289,9 @@ class global_results:
         return(GR)
 
     def get_gal_index(self,gal_num=0):
+        """
+        Returns galaxy index for given galaxy number in simulation box.
+        """
 
         GR = self._get_file(overwrite=False)
 
@@ -295,6 +301,9 @@ class global_results:
         return(indices[gal_nums == gal_num][0])
 
     def get_gal_num(self,gal_index=0):
+        """
+        Returns galaxy number in simulation box for given galaxy index.
+        """
 
         GR = self._get_file(overwrite=False)
 
@@ -304,6 +313,9 @@ class global_results:
         return(gal_nums[indices == gal_index])
 
     def get_attr(self,name):
+        """
+        Returns attribute of GR object.
+        """
 
         GR = self._get_file(overwrite=False)
 
@@ -312,6 +324,9 @@ class global_results:
         return(value)
 
     def edit_item(self,galname,name,value):
+        """
+        Updates property of a single galaxy in the sample and saves new dataframe of galaxy sample.
+        """
 
         p = copy.copy(params)
 
@@ -326,6 +341,9 @@ class global_results:
         self.save_results(GR)
 
     def add_column(self,name,values):
+        """
+        Adds galaxy property to dataframe of galaxy sample.
+        """
 
         p = copy.copy(params)
 
@@ -336,24 +354,36 @@ class global_results:
         self.save_results(GR)
 
     def save_results(self,GR):
+        """
+        Saves object attributes to file as dataframe.
+        """
 
         file_location = self.__get_file_location()
 
         GR.to_pickle(file_location)
 
     def print_header(self):
+        """
+        Prints properties for first 10 galaxies.
+        """
 
         GR = self._get_file(overwrite=False)
 
         print(GR.head())
 
     def print_all(self):
+        """
+        Prints all galaxy sample properties as dataframe.
+        """
 
         GR = self._get_file(overwrite=False)
 
         print(GR)
 
     def print_results(self):
+        """
+        Prints galaxy sample properties in pretty format in the terminal.
+        """
 
         p = copy.copy(params)
 
@@ -368,7 +398,6 @@ class global_results:
             ['s','f','e','f','f','f','f'],\
             [GR.galnames, GR.zreds, GR.M_star/1e10, GR.SFR, GR.R_gal, GR.lum_dist]
             )
-        #GR.SFRsd/p.SFRsd_MW, 
 
         try:
             print('\n ISM PROPERTIES')
@@ -406,30 +435,3 @@ class global_results:
                 )
         except:
             print('cannot print line luminosities yet')
-
-    def print_galaxy_properties(self,**kwargs):
-
-        args        =   dict(gal_index=0)
-        args        =   aux.update_dictionary(args,kwargs)
-        for key,val in args.items():
-            exec(key + '=val')
-
-        print('\nProperties of Galaxy number %s, %s, at redshift %s' % (gal_index+1,self.galnames[gal_index],self.zreds[gal_index]))
-
-        # Print these properties
-        print('+%20s+%20s+%15s+' % ((20*'-'), (20*'-'), (15*'-')))
-        print('|%20s|%20s|%15s|' % ('Property'.center(20), 'Value'.center(20), 'Name in code'.center(15)))
-        print('+%20s+%20s+%15s+' % ((20*'-'), (20*'-'), (15*'-')))
-        print('|%20s|%20s|%15s|' % ('Redshift'.center(20), '{:.3f}'.format(self.zreds[gal_index]), 'zred'.center(15)))
-        print('|%20s|%20s|%15s|' % ('Radius'.center(20), '{:.3f}'.format(np.max(self.R_gal[gal_index])), 'R_gal'.center(15)))
-        print('|%20s|%20s|%15s|' % ('Stellar mass'.center(20), '{:.3e}'.format(self.M_star[gal_index]), 'M_star'.center(15)))
-        print('|%20s|%20s|%15s|' % ('ISM mass'.center(20), '{:.3e}'.format(self.M_gas[gal_index]), 'M_gas'.center(15)))
-        print('|%20s|%20s|%15s|' % ('Dense gas mass fraction'.center(20), '{:.3e}'.format(self.f_dense[gal_index]*100.), 'f_dense'.center(15)))
-        print('|%20s|%20s|%15s|' % ('DM mass'.center(20), '{:.3e}'.format(self.M_dm[gal_index]), 'M_dm'.center(15)))
-        print('|%20s|%20s|%15s|' % ('SFR'.center(20), '{:.3f}'.format(self.SFR[gal_index]), 'SFR'.center(15)))
-        print('|%20s|%20s|%15s|' % ('SFR surface density'.center(20), '{:.4f}'.format(self.SFRsd[gal_index]), 'SFRsd'.center(15)))
-        print('|%20s|%20s|%15s|' % ('SFR-weighted Z'.center(20), '{:.4f}'.format(self.Zsfr[gal_index]), 'Zsfr'.center(15)))
-        print('+%20s+%20s+%15s+' % ((20*'-'), (20*'-'), (15*'-')))
-
-
-

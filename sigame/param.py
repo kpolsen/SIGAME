@@ -22,18 +22,18 @@ class read_params:
 
 
         #===========================================================================
-        """ Read from parameters_z*.txt """
+        """ Read from parameters.txt """
         #---------------------------------------------------------------------------
 
 
         file                =   open(params_file,'r', encoding="utf8")
         lc.clearcache()
 
-        parameter_list      =   ['nGal','ow','halos','snaps','haloIDs','z1',\
+        parameter_list      =   ['nGal','ow','verbose','halos','snaps','haloIDs','z1',\
                                 'hubble','omega_m','omega_lambda','omega_r',\
                                 'sim_type','sim_name','sim_run','d_sim',\
                                 'v_res','v_max','x_res_pc','x_max_pc','inc_dc',\
-                                'target','lines',\
+                                'target','lines','res',\
                                 'd_XL_data','N_cores','N_param','turb','grid_ext','table_ext']
 
         for i,line in enumerate(file):
@@ -57,6 +57,7 @@ class read_params:
         self.d_cloudy       =   self.d_XL_data + '/cloudy/'
         if self.grid_ext == '_ext': 
             self.d_cloudy       =   self.d_XL_data + '/cloudy/ext/'
+        self.d_cloudy_test  =   self.d_XL_data + '/cloudy/tests/'
         self.d_temp         =   os.getcwd() + '/sigame/temp/'
         self.d_plot         =   os.getcwd() + '/plots/'
 
@@ -70,9 +71,12 @@ class read_params:
         #---------------------------------------------------------------------------
 
         self.zred          =   float(self.z1)
+        self.res           =   float(self.res)
         self.nGal          =   int(self.nGal)
         if self.ow == 'yes': self.ow = True
         if self.ow == 'no': self.ow = False
+        if self.verbose == 'yes': self.verbose = True
+        if self.verbose == 'no': self.verbose = False
         self.z1            =   'z'+str(int(self.z1))
         self.hubble        =   float(self.hubble)
         self.omega_m       =   float(self.omega_m)
@@ -80,10 +84,10 @@ class read_params:
         self.omega_r       =   float(self.omega_r)
         # self.frac_h        =   float(self.frac_h)
         # self.f_R_gal       =   float(self.f_R_gal)
-        self.v_res         =   float(self.v_res)
-        self.v_max         =   float(self.v_max)
-        self.x_res_pc      =   float(self.x_res_pc)
-        self.x_max_pc      =   float(self.x_max_pc)
+        # self.v_res         =   float(self.v_res)
+        # self.v_max         =   float(self.v_max)
+        #self.x_res_pc      =   float(self.x_res_pc)
+        #self.x_max_pc      =   float(self.x_max_pc)
         self.N_cores       =   int(self.N_cores)
         self.N_param       =   int(self.N_param)
 
@@ -120,6 +124,7 @@ class read_params:
         run_options         =   ['step1_setup_SKIRT',\
                                  'step1_read_SKIRT',\
                                  'step2_grid_gas',\
+                                 'step3_mk_frag_table',\
                                  'step3_setup_Cloudy_grid',\
                                  'step3_run_Cloudy',\
                                  'step3_combine_Cloudy',\
@@ -142,23 +147,24 @@ class read_params:
         """ Print chosen parameters """
         #---------------------------------------------------------------------------
 
-        print('\n' + (' Parameters chosen').center(20+10+10+10))
-        print('+%20s+%10s+%15s+%50s+' % ((20*'-'), (10*'-'), (15*'-'), (50*'-')))
-        print('|%20s|%10s|%15s|%50s|' % ('Parameter'.center(20), 'Value'.center(10), 'Name in code'.center(15), 'Explanation'.center(50)))
-        print('+%20s+%10s+%15s+%50s+' % ((20*'-'), (10*'-'), (15*'-'), (50*'-')))
-        print('|%20s|%10g|%15s|%50s|' % ('Repr. redshift'.center(20), self.zred, 'zred'.center(15),'Redshift of simulation snapshot'.center(50)))
-        print('|%20s|%10g|%15s|%50s|' % ('# galaxies'.center(20), self.nGal, 'nGal'.center(15),'Number of galaxies in redshift sample'.center(50)))
-        print('|%20s|%10s|%15s|%50s|' % ('Sim name'.center(20), self.sim_name, 'sim_name'.center(15),'Simulation name'.center(50)))
-        print('|%20s|%10s|%15s|%50s|' % ('Sim run'.center(20), self.sim_run, 'sim_run'.center(15),'Simulation run'.center(50)))
-        print('|%20s|%10s|%15s|%50s|' % ('Grid ext'.center(20), self.grid_ext, 'grid_ext'.center(15),'Cloudy grid extension'.center(50)))
-        print('|%20s|%10s|%15s|%50s|' % ('Table ext'.center(20), self.table_ext, 'table_ext'.center(15),'Cloudy look-up table extension'.center(50)))
+        print('\n' + (' Parameters chosen').center(20+20+10+10))
+        print('+%20s+%20s+%15s+%50s+' % ((20*'-'), (20*'-'), (15*'-'), (50*'-')))
+        print('|%20s|%20s|%15s|%50s|' % ('Parameter'.center(20), 'Value'.center(20), 'Name in code'.center(15), 'Explanation'.center(50)))
+        print('+%20s+%20s+%15s+%50s+' % ((20*'-'), (20*'-'), (15*'-'), (50*'-')))
+        print('|%20s|%20g|%15s|%50s|' % ('Repr. redshift'.center(20), self.zred, 'zred'.center(15),'Redshift of simulation snapshot'.center(50)))
+        print('|%20s|%20g|%15s|%50s|' % ('# galaxies'.center(20), self.nGal, 'nGal'.center(15),'Number of galaxies in redshift sample'.center(50)))
+        print('|%20s|%20s|%15s|%50s|' % ('Sim name'.center(20), self.sim_name, 'sim_name'.center(15),'Simulation name'.center(50)))
+        print('|%20s|%20s|%15s|%50s|' % ('Sim run'.center(20), self.sim_run, 'sim_run'.center(15),'Simulation run'.center(50)))
+        print('|%20s|%20s|%15s|%50s|' % ('Grid ext'.center(20), self.grid_ext, 'grid_ext'.center(15),'Cloudy grid extension'.center(50)))
+        print('|%20s|%20s|%15s|%50s|' % ('Table ext'.center(20), self.table_ext, 'table_ext'.center(15),'Cloudy look-up table extension'.center(50)))
 
-        print('+%20s+%10s+%15s+%50s+' % ((20*'-'), (10*'-'), (15*'-'), (50*'-')))
+        print('+%20s+%20s+%15s+%50s+' % ((20*'-'), (20*'-'), (15*'-'), (50*'-')))
 
         print('\nThis is what sigame.run() is set up to do (change in parameter file):')
         if self.step1_setup_SKIRT:            print('- Generate input scripts for SKIRT radiative transfer')
         if self.step1_read_SKIRT:             print('- Read SKIRT output')
         if self.step2_grid_gas:               print('- Re-grid simulated gas data on cell structure')
+        if self.step3_mk_frag_table:          print('- Make a table of density PDFs from high-res simulations')
         if self.step3_setup_Cloudy_grid:      print('- Generate input scripts for Cloudy ionization equilibrium models')
         if self.step3_run_Cloudy:             print('- Run Cloudy')
         if self.step3_combine_Cloudy:         print('- Combine Cloudy otuput')
@@ -172,23 +178,23 @@ class read_params:
         """ Constants and variables used by SIGAME """
         #---------------------------------------------------------------------------
 
-        self.Tkcmb       			=   2.725*(1+float(self.zred))      # CMB temperature at this redshift
-        self.G_grav      			=   6.67428e-11                          # Gravitational constant [m^3 kg^-1 s^-2]
-        self.clight      			=   299792458                            # Speed of light [m/s]
-        self.hplanck     			=   4.135667662e-15                      # Planck constant [eV*s]
+        self.Tkcmb                  =   2.725*(1+float(self.zred))      # CMB temperature at this redshift
+        self.G_grav                 =   6.67428e-11                          # Gravitational constant [m^3 kg^-1 s^-2]
+        self.clight                 =   299792458                            # Speed of light [m/s]
+        self.hplanck                =   4.135667662e-15                      # Planck constant [eV*s]
         self.Ryd                   =   13.60569253                          # [eV]
         self.eV_J                  =   1.6021766208e-19                     # [J]
-        self.Habing         	    =   1.6e-3                               # ergs/cm^2/s
-        self.Msun        			=   1.989e30                             # Mass of Sun [kg]
-        self.Lsun        			=   3.839e26                             # Bol. luminosity of Sun [W]
-        self.kB          			=   1.381e-23                            # Boltzmanns constant [J K^-1]
-        self.kB_ergs          		=   1.3806e-16                           # Boltzmanns constant [ergs K^-1]
+        self.Habing                 =   1.6e-3                               # ergs/cm^2/s
+        self.Msun                   =   1.989e30                             # Mass of Sun [kg]
+        self.Lsun                   =   3.839e26                             # Bol. luminosity of Sun [W]
+        self.kB                     =   1.381e-23                            # Boltzmanns constant [J K^-1]
+        self.kB_ergs                =   1.3806e-16                           # Boltzmanns constant [ergs K^-1]
         self.b_wien                =   2.8977729e-3                         # Wien's displacement constant [m K]
-        self.kpc2m       			=   3.085677580666e19                    # kpc in m
-        self.pc2m        			=   3.085677580666e16                    # pc in m
-        self.kpc2cm      			=   3.085677580666e21                    # kpc in cm
-        self.pc2cm       			=   3.085677580666e18                    # pc in cm
-        self.au          			=   per.constants.atomic_mass_constant   # atomic mass unit [kg]
+        self.kpc2m                  =   3.085677580666e19                    # kpc in m
+        self.pc2m                   =   3.085677580666e16                    # pc in m
+        self.kpc2cm                 =   3.085677580666e21                    # kpc in cm
+        self.pc2cm                  =   3.085677580666e18                    # pc in cm
+        self.au                     =   per.constants.atomic_mass_constant   # atomic mass unit [kg]
         self.freq                   =   {'[CII]158':1900.5369,\
                                         '[CI]370':809.34197,\
                                         '[CI]610':492.160651,\
@@ -221,8 +227,8 @@ class read_params:
         self.f_NII_122             =   2459.370214752                       # frequency in GHz http://www.ipac.caltech.edu/iso/lws/atomic.html
         self.f_NII_205             =   1461.132118324                       # frequency in GHz http://www.ipac.caltech.edu/iso/lws/atomic.html
         self.f_OI                  =   4744.774906758                       # frequency in GHz http://www.ipac.caltech.edu/iso/lws/atomic.html
-        self.f_OIII       			=   3393.006224818                       # frequency in GHz http://www.ipac.caltech.edu/iso/lws/atomic.html
-        els         					=   ['H','He','Li','Be','B','C','N','O','F','Ne','Na','Mg','Al',\
+        self.f_OIII                 =   3393.006224818                       # frequency in GHz http://www.ipac.caltech.edu/iso/lws/atomic.html
+        els                             =   ['H','He','Li','Be','B','C','N','O','F','Ne','Na','Mg','Al',\
                                             'Si','P','S','Cl','Ar','K','Ca','Sc','Ti','V','Cr','Mn','Fe','Co','Ni','Cu','Zn']
         m_elements  =   {}
         for el in els: m_elements[el] = [getattr(per,el).mass*self.au]
@@ -238,22 +244,22 @@ class read_params:
                             'Mg':7.14e-4,'Si': 6.17e-4, 'S':3.12e-4, 'Ca':0.65e-4,'Fe': 1.31e-3}
         elements    =   m_elements.append(n_elements,sort=True)
         elements.index  =   ['mass','[n_i/n_H]']
-        self.elements 				=	elements
-        self.a_C         			=   elements.loc['[n_i/n_H]','C'] # solar abundance of carbon
+        self.elements               =   elements
+        self.a_C                    =   elements.loc['[n_i/n_H]','C'] # solar abundance of carbon
         self.mf_Z1                  =   0.0134                      # Asplund+09
-        self.mH          			=   elements.loc['mass','H']    # Hydrogen atomic mass [kg]
-        self.mC          			=   elements.loc['mass','C']    # Carbon atomic mass [kg]
-        self.me          			=   9.10938215e-31              # electron mass [kg]
-        self.m_p 					=	1.6726e-24
-        self.mCII        			=   self.mC-self.me
-        self.mCIII       			=   self.mC-2.*self.me
+        self.mH                     =   elements.loc['mass','H']    # Hydrogen atomic mass [kg]
+        self.mC                     =   elements.loc['mass','C']    # Carbon atomic mass [kg]
+        self.me                     =   9.10938215e-31              # electron mass [kg]
+        self.m_p                    =   1.6726e-24
+        self.mCII                   =   self.mC-self.me
+        self.mCIII                  =   self.mC-2.*self.me
         self.mCO                    =   elements.loc['mass','C']+elements.loc['mass','O']
-        self.mH2         			=   2.*elements.loc['mass','H'] # Molecular Hydrogen [kg]
-        self.pos         			=   ['x','y','z']               # set of coordinates (will use often)
-        self.posxy	    			=	['x','y']                   # set of coordinates (will use often)
-        self.vpos					=	['vx','vy','vz']            # set of velocities (will use often)
-        self.FUV_ISM     			=   0.6*1.6*1e-3                # local FUV field [ergs/s/cm^2]
-        self.CR_ISM      			=   3e-17                       # local CR field [s^-1]
+        self.mH2                    =   2.*elements.loc['mass','H'] # Molecular Hydrogen [kg]
+        self.pos                    =   ['x','y','z']               # set of coordinates (will use often)
+        self.posxy                  =   ['x','y']                   # set of coordinates (will use often)
+        self.vpos                   =   ['vx','vy','vz']            # set of velocities (will use often)
+        self.FUV_ISM                =   0.6*1.6*1e-3                # local FUV field [ergs/s/cm^2]
+        self.CR_ISM                 =   3e-17                       # local CR field [s^-1]
         self.SFRsd_MW               =   0.0033                      # [Msun/yr/kpc^2] https://ned.ipac.caltech.edu/level5/March15/Kennicutt/Kennicutt5.html
         self.Herschel_limits        =   dict(CII=0.13e-8)           # W/m^2/sr Croxall+17 KINGFISH
 
@@ -293,11 +299,11 @@ class read_params:
             col[i]         =    key
             i              +=   1
         self.col                    =   col
-        self.colsel      			=   [u'fuchsia',u'darkcyan',u'indigo',u'hotpink',u'blueviolet',u'tomato',u'seagreen',\
-                    					u'magenta',u'cyan',u'darkred',u'purple',u'lightgrey',\
-                    					u'brown',u'orange',u'darkgreen',u'black',u'yellow',\
-                    					u'darkmagenta',u'olive',u'lightsalmon',u'darkblue',\
-                    					u'navajowhite',u'sage']
+        self.colsel                 =   [u'fuchsia',u'darkcyan',u'indigo',u'hotpink',u'blueviolet',u'tomato',u'seagreen',\
+                                        u'magenta',u'cyan',u'darkred',u'purple',u'lightgrey',\
+                                        u'brown',u'orange',u'darkgreen',u'black',u'yellow',\
+                                        u'darkmagenta',u'olive',u'lightsalmon',u'darkblue',\
+                                        u'navajowhite',u'sage']
 
         self.add_default_args()
 
@@ -310,6 +316,18 @@ class read_params:
 
     def add_default_args(self):
 
+        moment0_dict = {'m':0 ,'volume':1, 'm_HII':2 ,'m_HI':3 ,'m_H2':4 ,'Z_mw':5, 'FUV_mw':6, \
+                    'P_mw':7,'Pe_mw':8,\
+                    'Tk_mw':9,'Te_mw':10,\
+                     'ne_mw':11,'ne_mw_HII':12,'ne_mw_HI':13,'ne_mw_H2':14,\
+                     'nH_mw':15,'nH_mw_HII':16,'nH_mw_HI':17,'nH_mw_H2':18,\
+                     'nH_vw':19,'ne_vw':20}
+        for i,line in enumerate(self.lines):
+            moment0_dict['L_%s' % line] = i*4+21
+            moment0_dict['L_%s_HII' % line] = i*4+21+1
+            moment0_dict['L_%s_HI' % line] = i*4+21+2
+            moment0_dict['L_%s_H2' % line] = i*4+21+3
+
         default_args        =   dict(\
 
                                 add=False,\
@@ -320,7 +338,6 @@ class read_params:
                                 bins=100,\
                                 box_size=100,\
 
-                                cb=False,\
                                 cell_type='',\
                                 classification='spherical',\
                                 cloudy_param={'ISM':2},\
@@ -346,10 +363,13 @@ class read_params:
                                 gal_indices=False,\
                                 gal_ob_present=True,\
                                 gal_ob={},\
-                                grid_Z = np.arange(-2,0.51,0.5),\
                                 grid_nH = np.arange(-4,7.1,1),\
-                                grid_FUV = np.arange(-7,4.1,2),\
-                                grid_DTM = np.arange(-2,-0.19,0.5),\
+                                grid_Z = np.arange(-2,0.51,0.5),\
+                                grid_FUV = np.arange(-7,4.1,1),\
+                                grid_DTM = np.arange(-2,-0.19,0.2),\
+                                grid_exts = ['_ism_BPASS','_ext_ism_BPASS'],\
+
+                                hexbin = False,\
                         
                                 interp_params=['lognH','lognSFR','logZ','logFUV','logNH','logDTM'],\
                                 ISM_phase='',\
@@ -362,13 +382,16 @@ class read_params:
                                 line='[CII]158',\
                                 label=False,\
                                 log=True,\
+                                ls='-',\
 
                                 map_type='',\
                                 method='caesar',\
                                 min_fraction=1./1e6,\
+                                moment0_dict = moment0_dict,\
+                                MS = False,\
 
                                 N_radial_bins=30,\
-                                nGals=[246,400],\
+                                nGals=[240,400],\
 
                                 one_color=True,\
                                 orientation='face-on',\
@@ -392,7 +415,6 @@ class read_params:
                                 target='L_CII',\
                                 text=False,\
 
-                                verbose=False,\
                                 vlabel='km/s',\
                                 vmax=False,\
                                 vmin=False,\

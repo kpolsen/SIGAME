@@ -26,6 +26,8 @@ def setup_SKIRT(GR):
     """ Creates input scripts for SKIRT to calculate the 
     interstellar radiation field (ISRF), 
     attenuated by dust via radiative transfer (RT).
+
+    :param GR: global results object that contains general info for this galaxy sample/
     """
 
     print('\n--- Step 1: Create input scripts for the attenuated interstellar radiation field (ISRF) with SKIRT ---')
@@ -40,6 +42,8 @@ def setup_SKIRT(GR):
 def read_SKIRT(GR):
     """ Read output from SKIRT and create 
     new galaxy object based on SKIRT output grid
+
+    :param GR: global results object that contains general info for this galaxy sample/
     """
 
     print('\n--- Step 1: Read output from SKIRT ---')
@@ -56,8 +60,10 @@ def read_SKIRT(GR):
             gal.read_SKIRT(gal_index)
 
 def grid_gas(GR):
-    """ Performs re-gridding of gas particle properties on the AMR 
+    """ Performs re-gridding of gas particle properties on the 
     cell grid structure provided by SKIRT.
+
+    :param GR: global results object that contains general info for this galaxy sample/
 
     """
 

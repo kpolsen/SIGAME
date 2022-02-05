@@ -12,6 +12,7 @@ from scipy import optimize
 # import scipy.stats as stats
 import scipy.integrate as integrate
 from scipy.interpolate import RegularGridInterpolator,griddata
+from scipy.interpolate import InterpolatedUnivariateSpline,interp1d,interp2d,RectBivariateSpline
 from scipy.interpolate import interp1d
 import multiprocessing as mp
 import os
@@ -32,14 +33,15 @@ import astropy.constants as c
 import astropy.units as u
 from scipy.spatial import cKDTree
 import sigame.galaxy as gal
+from scipy.optimize import curve_fit
+
 
 #===========================================================================
 """ Load parameters (used by all other modules) """
 #---------------------------------------------------------------------------
 
 def load_parameters():
-    # The following will be automatically filled out by __init__.py the first time you run SIGAME.
-    # To change after that, just overwrite sigame_directory with your current work folder:
+    # Load parameters chosen in parameters.txt and those added in params.py.
     
     sigame_directory        =   os.getcwd() + '/'
     
@@ -67,32 +69,36 @@ def get_file_location(**kwargs):
     if p.gal_ob_present:
         try:
             p.zred = kwargs['gal_ob'].zred
-            p.galname = kwargs['gal_ob'].name
             p.gal_num = kwargs['gal_ob'].gal_num
             p.gal_index = kwargs['gal_ob'].gal_index
         except:
             # Assume gal_ob is actually a dictionary
             p.zred = kwargs['gal_ob']['zred']
-            p.galname = kwargs['gal_ob']['galname']
             p.gal_num = kwargs['gal_ob']['gal_num']
             p.gal_index = kwargs['gal_ob']['gal_index']
 
     # Determine data path
-    if p.data_type == 'rawsimgas':         path = p.d_XL_data+'/data/particle_data/sim_data/'
-    if p.data_type == 'rawsimstar':         path = p.d_XL_data+'/data/particle_data/sim_data/'
+    if p.data_type == 'rawsimgas':      path = p.d_XL_data+'/data/particle_data/sim_data/'
+    if p.data_type == 'rawsimstar':     path = p.d_XL_data+'/data/particle_data/sim_data/'
     if p.data_type == 'simgas':         path = p.d_XL_data+'/data/particle_data/'
     if p.data_type == 'simstar':        path = p.d_XL_data+'/data/particle_data/'
-    if p.data_type == 'cell_data':      path = p.d_XL_data+'/data/cell_data/'
+    if p.data_type == 'cell_data':      
+        path = p.d_XL_data+'/data/cell_data/'
+        if p.w_hii: path = p.d_XL_data+'/data/cell_data/w_hii/'
+    if 'd_data' in kwargs.keys():
+        if kwargs['d_data'] != '':
+            path = kwargs['d_data']
     # Determine filename
     try: 
         if not os.path.exists(path): os.mkdir(path)
         filename = os.path.join(path, 'z'+'{:.2f}'.format(p.zred)+'_%i' % p.gal_num+'_'+p.sim_name+p.sim_run+'.'+p.data_type)
         if p.data_type == 'cell_data': 
-            filename = os.path.join(path, 'z'+'{:.2f}'.format(p.zred)+'_%i' % p.gal_num+'_'+p.sim_name+p.sim_run+'.'+p.data_type)
+            filename = os.path.join(path, 'z'+'{:.2f}'.format(p.zred)+'_%i' % p.gal_num+'_'+p.sim_name+p.sim_run+'.'+p.data_type) #+p.skirt_ext
     except:
         print("Need the following to create filename: gal_ob (or zred, galname and data_type)")
         raise NameError
 
+    #print(p.gal_index,filename)
     return(filename)
 
 def update_dictionary(values,new_values):
@@ -128,7 +134,6 @@ def load_temp_file(verbose=False,**kwargs):
         setattr(p,key,val)
 
     filename    =   get_file_location(**kwargs)
-    #print(filename)
 
     try:
         data = pd.read_hdf(filename)
@@ -175,7 +180,7 @@ def h5store(df, dc_name, filename, **kwargs):
 """ For galaxy.isrf class """
 #---------------------------------------------------------------------------
 
-def NIR_index(wa):
+def OIR_index(wa):
     # sum within: (https://www2.chemistry.msu.edu/faculty/reusch/virttxtjml/cnvcalc.htm)
     # 0.5 eV to 2 eV 
     wa1 = c.c.value*c.h.value/(2*u.eV.to('J'))*1e6 # microns
@@ -243,7 +248,7 @@ def read_probe_wavelengths(name):
 
     p = copy.copy(params)
 
-    isrf_wavelengths = pd.read_csv(p.d_skirt+name+'_rfpc_wavelengths.dat',comment='#',sep=' ',engine='python',\
+    isrf_wavelengths = pd.read_csv(p.d_skirt+name+p.skirt_ext+'_rfpc_wavelengths.dat',comment='#',sep=' ',engine='python',\
         names=['%i' % i for i in range(4)]) # microns
     # isrf_freq = p.clight/(isrf_wavelengths*1e-6) # Hz
     # isrf_wavelengths['bin_width'] = isrf_wavelengths['3'] - isrf_wavelengths['2']
@@ -257,7 +262,7 @@ def read_SED_inst_wavelengths(name):
 
     p = copy.copy(params)
 
-    isrf_wavelengths = pd.read_csv(p.d_skirt+'%s_xy_wavelengths.dat' % name,skiprows=4,sep=' ',engine='python',\
+    isrf_wavelengths = pd.read_csv(p.d_skirt+'%s_xy_wavelengths.dat' % (name+p.skirt_ext),skiprows=4,sep=' ',engine='python',\
         names=['wavelength','bin_width','left','right']) # microns
     return(isrf_wavelengths['wavelength'].values,isrf_wavelengths['bin_width'].values)
 
@@ -267,10 +272,9 @@ def read_map_inst_wavelengths(name):
 
     p = copy.copy(params)
 
-    isrf_wavelengths = pd.read_csv(p.d_skirt+'%s_xy_map_wavelengths.dat' % name,skiprows=4,sep=' ',engine='python',\
+    isrf_wavelengths = pd.read_csv(p.d_skirt+'%s_xy_map_wavelengths.dat' % (name+p.skirt_ext),skiprows=4,sep=' ',engine='python',\
         names=['wavelength','bin_width','left','right']) # microns
     return(isrf_wavelengths['wavelength'].values,isrf_wavelengths['bin_width'].values)
-
 
 def read_probe_intensities(name,Nbins):
     """ Read flux (in W/m2/micron/sr) from radiation field probe of each cell.
@@ -278,11 +282,9 @@ def read_probe_intensities(name,Nbins):
 
     p = copy.copy(params)
 
-    isrf_intensities = pd.read_csv(p.d_skirt+name+'_rfpc_J.dat',comment='#',sep=' ',engine='python',\
+    isrf_intensities = pd.read_csv(p.d_skirt+name+p.skirt_ext+'_rfpc_J.dat',comment='#',sep=' ',engine='python',\
             names=['%i' % (i-1) for i in range(Nbins+1)],usecols = [i+1 for i in range(Nbins)])
     return(isrf_intensities)
-
-
 
 #===========================================================================
 """ For galaxy.frag class """
@@ -424,7 +426,6 @@ def lognormal_powerlaw_PDF(n,ratio,n_vw,Mach=10):
         
     return(PDF_integrated/np.sum(PDF_integrated))
 
-
 def Wendland_C2_kernel(r,h):
     """ From: https://github.com/SWIFTSIM/swiftsimio/blob/master/swiftsimio/visualisation/slice.py
     Kernel implementation for swiftsimio. This is the Wendland-C2
@@ -488,21 +489,55 @@ def Pfunc(i,simgas1,simgas,simstar,m_gas,m_star):
     return i, pressure_term,surf_gas,surf_star,sigma_gas,sigma_star,vel_disp_gas
 
 #===========================================================================
-""" For galaxy.interpolation class """
+""" For Cloudy_modeling and galaxy.interpolation class """
 #---------------------------------------------------------------------------
+
+def get_Cloudy_lines_dict():
+
+    Cloudy_lines_dict = {\
+        'O  1 145.495m' : '[OI]145',\
+        'O  1 63.1679m' : '[OI]63',\
+        'O  3 88.3323m' : '[OIII]88',\
+        'O  4 25.8832m' : '[OIV]25',\
+        'N  2 205.244m' : '[NII]205',\
+        'N  2 121.767m' : '[NII]122',\
+        'NE 2 12.8101m' : '[NeII]12',\
+        'NE 3 15.5509m' : '[NeIII]15',\
+        'C  2 157.636m' : '[CII]158',\
+        'C  1 609.590m' : '[CI]610',\
+        'C  1 370.269m' : '[CI]370',\
+        'CO   2600.05m' : 'CO(1-0)',\
+        'CO   1300.05m' : 'CO(2-1)',\
+        'CO   866.727m' : 'CO(3-2)',\
+        'CO   650.074m' : 'CO(4-3)',\
+        'CO   325.137m' : 'CO(8-7)',\
+        'S  3 18.7078m' : '[SIII]18',\
+        'FE 2 25.9811m' : '[FeII]25',\
+        'H2   17.0300m' : 'H2_S(1)',\
+        'H2   12.2752m' : 'H2_S(2)',\
+        'H2   9.66228m' : 'H2_S(3)',\
+        'H2   8.02362m' : 'H2_S(4)',\
+        'H2   6.90725m' : 'H2_S(5)',\
+        'H2   6.10718m' : 'H2_S(6)',\
+        'H2   5.50996m' : 'H2_S(7)'}
+
+    return(Cloudy_lines_dict)
 
 def get_NH_from_cloudy(logZ=0):
     '''
     Purpose
     ---------
     Read grid made with different metallicities and column densities 
-    to convert NIR/FUV flux ratios to column densities.
+    to convert OIR/FUV flux ratios to column densities.
     '''
 
     p = copy.copy(params)
+    grid_ext_name = 'grid_run_ext%s' % p.grid_ext.replace('_ext','')
 
-    # READ TRANSMITTED SPECTRA FROM CLOUDY GRD
-    cont2 = pd.read_table(p.d_table+'cloudy/NH/grid_run_ext.cont2',skiprows=0,names=['E','I_trans','coef'])
+    # READ TRANSMITTED SPECTRA FROM CLOUDY GRD IN UNITS erg/s
+    if p.grid_ext == '_ext':
+        p.d_cloudy = p.d_cloudy.replace('ext/','')
+    cont2 = pd.read_table(p.d_cloudy+'NH/%s.cont2' % grid_ext_name,skiprows=0,names=['E','I_trans','coef'])
     E = cont2.E.values
     i_shift = np.array(['########################### GRID_DELIMIT' in _ for _ in E])
     i_delims = np.arange(len(cont2))[i_shift == True]
@@ -513,33 +548,34 @@ def get_NH_from_cloudy(logZ=0):
         cont[i,:] = I_trans
 
     # READ METALLICITIES AND COLUMN DENSITIES
-    out = open(p.d_table+'cloudy/NH/grid_run_ext.out','r')
-    logNHs = []
-    logZs = []
-    start = False
-    for line in out.readlines():
-        if line == ' **************************************************\n': start = True
-        if start:
-            if 'STOP COLUMN DENSITY ' in line:
-                logNHs.append(float(line.split('COLUMN DENSITY ')[1].split(' ')[0]))
-            if 'METALS' in line:
-                logZs.append(float(line.split(' ')[2]))
-        if line == ' Writing input files has been completed.\n':
-            break
-    logNHs = np.array(logNHs)
-    logZs = np.array(logZs)
+    grd = pd.read_csv(p.d_cloudy + 'NH/%s.grd' % grid_ext_name,skiprows=1,sep='\t',names=['i','Failure','Warnings','Exit code','rank','seq','logNH','gridparam'])
+    logNHs = grd['logNH'].values#[grd['Exit code'] != '       failed assert']
+    print('Number of NHs : %i' % len(logNHs))
 
-    x = (E[i_delims[0]-N_E:i_delims[0]]).astype(float)*u.Ry.to('eV') # eV
-    F_FUV_W_m2 = np.array([np.sum(cont[_,(x >= 6) & (x < 13.6)])*1e-7*1e6 for _ in range(cont.shape[0])])
-    F_NIR_W_m2 = np.array([np.sum(cont[_,(x >= 0.5) & (x < 2)])*1e-7*1e6 for _ in range(cont.shape[0])])
-    R_NIR_FUV = F_NIR_W_m2 / F_FUV_W_m2
+    E_eV = (E[i_delims[0]-N_E:i_delims[0]]).astype(float)*u.Ry.to('eV') # eV
+    E_Hz = E_eV * u.eV.to(u.J) / c.h.value
 
-    # SELECT ONE METALLICITY
-    logNHs = logNHs[logZs==logZ]
-    R_NIR_FUV = R_NIR_FUV[logZs==logZ]
-    logR_NIR_FUV = np.log10(R_NIR_FUV)
+    F_FUV = np.array([scipy.integrate.simps(cont[_,(E_eV >= 6) & (E_eV < 13.6)]/E_Hz[(E_eV >= 6) & (E_eV < 13.6)]) for _ in range(cont.shape[0])])
+    F_OIR = np.array([scipy.integrate.simps(cont[_,(E_eV >= 0.5) & (E_eV < 2)]/E_Hz[(E_eV >= 0.5) & (E_eV < 2)]) for _ in range(cont.shape[0])])
+    R_OIR_FUV1 = F_OIR / F_FUV 
+    logR_OIR_FUV1 = np.log10(R_OIR_FUV1)
 
-    return(logNHs,R_NIR_FUV)
+    return(logNHs,R_OIR_FUV1)
+
+def random_positions(r,pos,N):
+
+    ra          =   np.random.rand(N)  # draw nn random numbers between 0 and 1
+    ra1         =   np.random.rand(N)  # draw nn random numbers between 0 and 1
+    ra2         =   np.random.rand(N)  # draw nn random numbers between 0 and 1
+    ra_R        =   ra*r
+    ra_phi      =   ra1*2*np.pi
+    ra_theta    =   ra2*np.pi
+    ra          =   [ra_R*np.sin(ra_theta)*np.cos(ra_phi),+\
+                    ra_R*np.sin(ra_theta)*np.sin(ra_phi),+\
+                    ra_R*np.cos(ra_theta)]
+    new_pos     =   np.column_stack((pos[0]+np.array(ra)[0,:],pos[1]+np.array(ra)[1,:],pos[2]+np.array(ra)[2,:]))
+
+    return(new_pos,ra_R)
 
 #===========================================================================
 """ For global_results.global_results class """
@@ -599,13 +635,27 @@ def pretty_print(col_names,units,format,values):
 """ For plotting and mapping """
 #---------------------------------------------------------------------------
 
+def moment0_map_location(**kwargs):
+    """ Returns location of moment0 map data.
+    """
+
+    p = copy.copy(params)
+    for key,val in kwargs.items():
+        setattr(p,key,val)
+    if p.sim_type == 'amr': location = p.d_XL_data + 'data/regular_cell_data/moment0map_%s%s' % (p.sim_name,p.sim_run) + '_' + p.plane + '_res' + str(p.res) + '.npy'
+    if p.sim_type == 'sph': location = p.d_XL_data + 'data/regular_cell_data/moment0map_%s%s_%i%s' % (p.sim_name,p.sim_run,p.gal_index,p.skirt_ext) + '_' + p.plane + '_res' + str(p.res) + '.npy'
+    print(location)
+    return location
+
 def select_salim18(M_star,SFR):
+    """ Selects galaxies within quartile range of Salim+18 z=0 MS.
+    """
 
     MS_salim = pd.read_csv('data/observations/MS/salim2018_ms_v1.dat',\
             names=['logMstar','logsSFR','logsSFR_1','logsSFR_2'],sep='   ')
-    f1 = interp1d(MS_salim.logMstar,MS_salim.logsSFR_1)
+    f1 = interp1d(MS_salim.logMstar,MS_salim.logsSFR_1,fill_value="extrapolate")
     SFR_low = M_star*10.**f1(np.log10(M_star))
-    f2 = interp1d(MS_salim.logMstar,MS_salim.logsSFR_2)
+    f2 = interp1d(MS_salim.logMstar,MS_salim.logsSFR_2,fill_value="extrapolate")
     SFR_high = M_star*10.**f2(np.log10(M_star))
 
     indices = np.arange(len(M_star))
@@ -614,11 +664,72 @@ def select_salim18(M_star,SFR):
 
     return indices
 
+def distance_from_salim18(M_star,SFR):
+    """ Returns distance from Salim+18 z=0 MS in SFR.
+    """
+
+    MS_salim = pd.read_csv('data/observations/MS/salim2018_ms_v1.dat',\
+            names=['logMstar','logsSFR','logsSFR_1','logsSFR_2'],sep='   ')
+
+    f1 = interp1d(MS_salim.logMstar,np.log10(10.**MS_salim.logMstar*10.**MS_salim.logsSFR),fill_value="extrapolate")
+    lSFR_S18 = f1(np.log10(M_star))
+
+    dlSFR = np.log10(SFR) - lSFR_S18
+
+    return dlSFR
+
+
+def add_FIR_lum(res=1,R=0,plane='xy',**kwargs):
+    """ Add FIR luminosity per pixel from SKIRT map output
+    """
+
+    p = copy.copy(params)
+    for key,val in kwargs.items():
+        setattr(p,key,val)
+
+    location = moment0_map_location(res=res,plane=plane,gal_index=p.gal_index)
+    df = pd.read_pickle(location.replace('.npy',''))
+
+    # Plot mw nH from moment0 map
+    fig, ax1 = plt.subplots(figsize=(10,10))
+    ax1.scatter(df.x,df.y,marker='o',c=df.nH_mw)
+    ax1.set_xlim([-R,R])
+    ax1.set_ylim([-R,R])
+    plt.savefig(p.d_plot+'moment0/test_G%i_nH' % (p.gal_index))
+
+    # Plot FIR lum per pixel
+    isrf_ob = gal.isrf(p.gal_index)
+    image_data,units,wa     =   isrf_ob._get_map_inst(orientation=plane,select=p.select)
+    N_start,N_stop          =   FIR_index(wa)
+    FIR_xy_image            =   image_data[N_start:N_stop,:,:].sum(axis=0)
+    index1                  =   np.arange(image_data.shape[1])
+    index2                  =   np.arange(image_data.shape[2])
+    index1,index2           =   np.meshgrid(index1,index2)
+    F_FIR_xy_image            =   np.zeros([image_data.shape[1],image_data.shape[2]])
+    # Integrate to get from W/m$^2$/micron/arcsec$^2$ to W/m$^2$/arcsec$^2$
+    for i1,i2 in zip(index1.flatten(),index2.flatten()):
+        F_FIR_xy_image[i1,i2]            =   np.trapz(image_data[N_start:N_stop,i1,i2],x=wa[N_start:N_stop])
+    x = np.linspace(-R,R,FIR_xy_image.shape[0])
+    y = np.linspace(-R,R,FIR_xy_image.shape[1])
+    # Integrate over sphere and solid angle and convert to solar luminosity
+    L_FIR_xy_image = F_FIR_xy_image * 4 * np.pi * 4 * np.pi * (10e6 * c.pc.to('m').value)**2 / p.Lsun 
+    f_F_FIR = RectBivariateSpline(x,y,F_FIR_xy_image) 
+    f_L_FIR = RectBivariateSpline(x,y,L_FIR_xy_image) 
+    print(L_FIR_xy_image.min(),L_FIR_xy_image.max())
+    print('FIR luminosity from summing over image: %.4e' % (L_FIR_xy_image.sum()))
+
+    # Interpolate FIR flux at pixel locations
+    F_FIR_pixels = f_F_FIR(df.y.values.astype('float64'),df.x.values.astype('float64'),grid=False)
+    L_FIR_pixels = f_L_FIR(df.y.values.astype('float64'),df.x.values.astype('float64'),grid=False)
+    df['F_FIR'] = F_FIR_pixels.flatten()
+    df['L_FIR'] = L_FIR_pixels.flatten()
+    
+    df.to_csv(location.replace('.npy','.csv'))
+    df.to_pickle(location.replace('.npy',''))
+
 def convert_cell_data_to_regular_grid(res=0.5,plane='xy',**kwargs):
     """ 
-    Purpose
-    ---------
-    Creates and stores a matrix that maps cell data to a regular grid in 2D.
+    This function creates and stores a matrix that maps cell data to a regular grid in 2D.
 
     Parameters
     ----------
@@ -639,23 +750,39 @@ def convert_cell_data_to_regular_grid(res=0.5,plane='xy',**kwargs):
 
     gal_ob             =   gal.galaxy(p.gal_index)
     datacube           =   gal_ob.cell_data.get_dataframe()
+    #datacube = datacube[(datacube.x > -5) & (datacube.x < 5) & (datacube.y > -5) & (datacube.y < 5 ) & (datacube.z > -5) & (datacube.z < 5) ].reset_index(drop=True)
     datacube['m_H2']   =  datacube.m*datacube.mf_H2_grid
     datacube['m_HII']  =  datacube.m*datacube.mf_HII_grid
     datacube['m_HI']   =  datacube.m*datacube.mf_HI_grid
+    # Only count volume of cells with ISM (threshold from Romeel)
+    cell_volume = datacube['cell_volume'].values
+    cell_volume[datacube.nH.values < 0.01] = 0
+    datacube['cell_volume'] = cell_volume
+    datacube = datacube.fillna(0)
     # CAREFUL! Order here must correspond to dictionary in param.py
-    properties = np.column_stack((datacube.m, datacube.m_H2, datacube.m_HI, datacube.m_HII,\
-                                  datacube.m * datacube.Z, datacube.m * datacube.G0,\
-                                  datacube.m * datacube.ne_mw,datacube.m_HI * datacube.ne_HI_mw,\
-                                  datacube.m_HII * datacube.ne_HII_mw,datacube.m_H2 * datacube.ne_H2_mw,\
-                                  datacube.m_HII * datacube.Te_mw, datacube.m * datacube.Tk_mw))
+    print('Min and max pressure:')
+    print(datacube.P_mw.min(),datacube.P_mw.max())
+    properties = np.column_stack((datacube.m, datacube.cell_volume, datacube.m_HII, datacube.m_HI, datacube.m_H2, \
+                              datacube.m * datacube.Z, datacube.m * datacube.G0,\
+                              # PRESSURES
+                              datacube.m * datacube.P_mw,\
+                              datacube.m * datacube.P_e_mw, \
+                              # TEMPERATURES
+                              datacube.m * datacube.Tk_mw,\
+                              datacube.m_HII * datacube.Te_mw, 
+                              # MASS-WEIGHTED DENSITIES
+                              datacube.m * datacube.ne_mw,datacube.m_HII * datacube.ne_HII_mw,\
+                              datacube.m_HI * datacube.ne_HI_mw,datacube.m_H2 * datacube.ne_H2_mw,\
+                              datacube.m * datacube.nH_mw,datacube.m_HII * datacube.nH_mw,\
+                              datacube.m_HI * datacube.nH_mw,datacube.m_H2 * datacube.nH_mw,\
+                              # VOLUME-WEIGHTED DENSITIES
+                              datacube.cell_volume * datacube.nH,datacube.cell_volume * datacube.ne_vw))
 
     for line in p.lines:
         properties = np.column_stack((properties,datacube['L_%s' % line]/6,\
                                   datacube['L_%s_HII' % line]/6,\
                                   datacube['L_%s_HI' % line]/6,\
                                   datacube['L_%s_H2' % line]/6))
-    
-    print('Max x: ',datacube.x.max())
     cellsize = datacube.cell_size                     # (Cell-sizes in kpc)                         
     X = datacube.x                                    # (x-coordinates)
     Y = datacube.y                                    # (y-coordinates)
@@ -672,7 +799,7 @@ def convert_cell_data_to_regular_grid(res=0.5,plane='xy',**kwargs):
     area = cellarea
     for _ in range(len(p.moment0_dict.keys())-1):
         area = np.column_stack((area,cellarea))
-    celldensity =  properties / area                   # units / kpc^2
+    celldensity =  properties / area                  # units / kpc^2
     
     if plane == 'xy':
         axis1, min1, max1, minindex1, maxindex1 = X, xmin, xmax, xminindex, xmaxindex
@@ -723,7 +850,8 @@ def convert_cell_data_to_regular_grid(res=0.5,plane='xy',**kwargs):
 
             # Calling line_luminosity function for the particular pixel: 
             lineluminosity = line_luminosity(tree, cell1, cell2, pixel, celldensity, R)
-            
+           
+            lineluminosity = np.nan_to_num(lineluminosity)
             if np.sum(lineluminosity) > 0:
                 pass
             else:
@@ -742,16 +870,13 @@ def convert_cell_data_to_regular_grid(res=0.5,plane='xy',**kwargs):
     momentmap = np.array(momentmapdata)
     momentmap = np.append(momentmap, [['pixel size', index1, index2, 0]], axis=0) # Information of image size in pixel
         
-    if p.sim_type == 'sph': filename = p.d_XL_data + 'data/regular_cell_data/moment0map_%s%s_%i' % (p.sim_name,p.sim_run,p.gal_index) + '_' + plane + '_res' + str(res)
-    if p.sim_type == 'amr': filename = p.d_XL_data + 'data/regular_cell_data/moment0map_' + p.sim_name + p.sim_run + '_' + plane + '_res' + str(res)
+    location = moment0_map_location(res=res,plane=plane,gal_index=p.gal_index)
                 
-    np.save(filename, momentmap)
-    
+    np.save(location, momentmap)
+
 def line_luminosity(tree, cell1, cell2, pixel, celldensity, R):
     '''
-    Purpose
-    ---------
-    This function returns the added up total luminosity of the pixel.
+    This function returns the added up total luminosity of the pixel, used by convert_cell_data_to_regular_grid.
     '''
     
     # Pixel-coordinates:
@@ -785,6 +910,8 @@ def line_luminosity(tree, cell1, cell2, pixel, celldensity, R):
             
             # 5. Finding overlapping crosssection area and luminosity due to that overlpping cell:
             crosssection = edge1 * edge2
+            #print(celldensity.shape)
+            #pixelluminosity = crosssection * celldensity[0,int(ax1[i][0])]
             pixelluminosity = crosssection * celldensity[int(ax1[i][0])]
             
             # 6. Adding up the luminosity due to each cell:
@@ -828,6 +955,61 @@ def MS_SFR_Mstar(Mstars):
     return(SFR_MS)
 
 #===========================================================================
+""" For reading Cloudy output """
+#---------------------------------------------------------------------------
+
+def NII_from_logne(logne):
+
+    p = copy.copy(params)
+
+    cloudy_NII_ratio_ne()
+
+    fit_params = np.load(p.d_table + 'cloudy/NII/fit_params_ne_NII.npy')
+
+    return(np.tanh(logne*fit_params[0]+fit_params[1])*fit_params[2]+fit_params[3])
+
+def logne_from_NII(NII_ratio):
+
+    p = copy.copy(params)
+
+    cloudy_NII_ratio_ne()
+
+    fit_params = np.load(p.d_table + 'cloudy/NII/fit_params_ne_NII.npy')
+
+    return((np.arctanh(((NII_ratio-fit_params[3])/fit_params[2]))-fit_params[1])/fit_params[0])
+
+def cloudy_NII_ratio_ne():
+    "Calculate [NII] ratio as function of electron density from 1-zone Cloudy models"
+
+    p = copy.copy(params)
+
+    NH,FUV,Z,DTM,nH = 20,0,0,-0.4,4
+
+    # Fixed parameters:
+    grid = pd.read_pickle(p.d_table + 'cloudy/NII/grid_table_z0_ahimsa')
+    grid['index'] = np.arange(len(grid))
+    grid['DTM'] = np.round(grid.DTM.values*10.)/10.
+
+    print('For a cell in Cloudy with:')
+    print('log NH = %s' % NH)
+    print('log Z = %s' % Z)
+    print('DTM = %s' % (10.**DTM))
+    print('log nH = %s' % nH)
+
+    # Make fit from hyperbolic tangent
+    print('\nA hyperbolic tangent fit can be made to the [NII]-ne relation:')
+    xfit = np.arange(-3,4,0.1)
+    init_vals = 1.4,-4.8,5,5
+    fit_params,covar = curve_fit(tanh_func,np.log10(grid['ne'].values),\
+        grid['[NII]122'].values/grid['[NII]205'].values,p0=init_vals,maxfev=10000)
+    np.save(p.d_table + 'cloudy/NII/fit_params_ne_NII',fit_params)
+
+
+def tanh_func(x,a,b,c,d):
+
+    return(np.tanh(x*a+b)*c+d)
+
+#===========================================================================
 """ Unit conversions """
 #---------------------------------------------------------------------------
 
@@ -856,12 +1038,14 @@ def Lsun_to_K_km_s_pc2(L_sun,line):
 
     # This is L_sun * c**3 / (4 pi (1pc/1m)**2 * k_B) in SI units (kB is in J/K),
     # which shows up in the lsun to K km/s pc^2 conversion
-    lsun_kkmspc2_const = c.L_sun.value * c.c.clight**3 / c.k_B / (4.0 * np.pi * c.pc.to('m') ** 2)
+    lsun_kkmspc2_const = c.L_sun.value * c.c.value**3 / c.k_B.value / (4.0 * np.pi * c.pc.to('m').value ** 2)
 
     L_K_km_s_pc2 = L_sun * 5e-4 * lsun_kkmspc2_const * (freq*1e9) ** (-3)
 
     # Fits with eqs from Solomon 1997 ApJ 478:
-    # L_K_km_s_pc2 = L_sun * 3.125e10 * freq ** (-3)
+    L_K_km_s_pc2 = L_sun * 3.125e10 * freq ** (-3)
+    #print(L_sun.min() * 3.125e10 * freq ** (-3))
+    #print(L_sun.max() * 3.125e10 * freq ** (-3))
 
     return(L_K_km_s_pc2)
 
@@ -888,3 +1072,12 @@ def Jy_km_s_to_Lsun(L_Jy_km_s,D_L,line):
     L_sun = L_Jy_km_s * 1.04e-3 * freq * D_L**2 / (1+p.zred)
 
     return(L_sun)
+
+def nm_to_eV(nm):
+    
+    return(c.h.value * c.c.value / (nm*1e-9) * u.J.to('eV'))
+
+def eV_to_micron(eV):
+           
+    return(c.h.value * c.c.value / (eV*u.eV.to('J')) * 1e6)
+

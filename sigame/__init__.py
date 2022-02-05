@@ -15,7 +15,6 @@ import pdb
 import re
 import subprocess as sub
 import matplotlib.pyplot as plt
-plt.style.use('seaborn-talk')
 
 print('' + '\n' +
       '     =======================================================  ' + '\n' +
@@ -34,7 +33,7 @@ print('' + '\n' +
       '---- A code to simulate the far-IR emission lines of the ISM  ----' + '\n' +
       '------------- in galaxies from hydrodynamical codes --------------' + '\n' +
       '----- for the interpretation and prediction of observations. -----' + '\n' +
-      '- Contact: Karen Olsen, karenolsen (at) email.arizona.edu (2021) -' + '\n' +
+      '---- Contact: Karen Olsen, kpolsen (at) protonmail.com (2021) ----' + '\n' +
       '' + '\n')
 # style from http://www.kammerl.de/ascii/AsciiSignature.php
 # (alternatives: epic, roman, blocks, varsity, pepples, soft, standard, starwars)
@@ -53,19 +52,6 @@ except IOError:
 # Create parameter object
 from .param import *
 p = read_params(params_file)
-
-# Edit aux.py to find the temporary parameter file
-file_in = open(p.parent + 'sigame/auxil.py', 'r', encoding="utf8")
-file_out = open(p.parent + 'sigame/auxil_temp.py', 'w', encoding="utf8")
-for line in file_in:
-    if 'insert external parent here' in line:
-        line = line.replace('insert external parent here',p.parent)
-    file_out.write(line)
-file_in.close()
-file_out.close()
-delete = sub.Popen('mv ' + p.parent + 'sigame/auxil_temp.py ' +
-                   p.parent + 'sigame/auxil.py', shell=True)
-stdout, stderr = delete.communicate()   # wait until cloudy is done
 
 # Matplotlib style file
 plt.style.use(p.parent + 'sigame/pretty.mplstyle')
