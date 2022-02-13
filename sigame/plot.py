@@ -569,8 +569,8 @@ def map_sim_property(**kwargs):
         ax1.set_xlim([-1/zoom * p.R_max,1/zoom * p.R_max])
         ax1.set_ylim([-1/zoom * p.R_max,1/zoom * p.R_max])
         if p.colorbar: 
-            cax1 = divider.append_axes("right", size="5%", pad=0.05)
             divider = make_axes_locatable(ax1)
+            cax1 = divider.append_axes("right", size="5%", pad=0.05)
             fig.colorbar(im,cax=cax1,label=lab)
         if not p.add: ax1.set_xlabel('x [kpc]'); ax1.set_ylabel('y [kpc]')
         if (p.prop == 'm') & (p.text == True):
@@ -892,19 +892,20 @@ def Main_Sequence(**kwargs):
     fig,ax              =   plt.subplots(figsize = (8,6))
  
     # Plot all galaxies in simulation volume
-    df_all              =   pd.read_pickle(p.d_data + 'galaxy_selection/z0_all_galaxies%s' % p.sim_runs[0])
-    print('%i galaxies in Simba-%s' % (len(df_all),p.sim_runs[0]))
-    df_all1 = df_all[(df_all['SFR_'+method] > 0) & (df_all['SFR_'+method] != 1)]
-    hb = ax.hexbin(df_all1['M_star_'+method],df_all1['SFR_'+method],bins='log',xscale='log',yscale='log',\
+    try:
+        df_all              =   pd.read_pickle(p.d_data + 'galaxy_selection/z0_all_galaxies%s' % p.sim_runs[0])
+        print('%i galaxies in Simba-%s' % (len(df_all),p.sim_runs[0]))
+        df_all1 = df_all[(df_all['SFR_'+method] > 0) & (df_all['SFR_'+method] != 1)]
+        hb = ax.hexbin(df_all1['M_star_'+method],df_all1['SFR_'+method],bins='log',xscale='log',yscale='log',\
                              cmap='binary',lw=0,gridsize=70)
-    #ax.plot(df_all1['M_star_'+method],df_all1['SFR_'+method],'o',color='r',ms=2,alpha=0.3)
-    df_all              =   pd.read_pickle(p.d_data + 'galaxy_selection/z0_all_galaxies%s' % p.sim_runs[1])
-    print('%i galaxies in Simba-%s' % (len(df_all),p.sim_runs[1]))
-    df_all2 = df_all[df_all['SFR_'+method] > 0]
-    df_all = df_all1.append(df_all2, ignore_index=True)
-    hb = ax.hexbin(df_all['M_star_'+method],df_all['SFR_'+method],bins='log',xscale='log',yscale='log',\
-                            cmap='binary',lw=0,gridsize=(50,70))
-    #ax.plot(df_all2['M_star_'+method],df_all2['SFR_'+method],'o',ms=2,alpha=0.3)
+        df_all              =   pd.read_pickle(p.d_data + 'galaxy_selection/z0_all_galaxies%s' % p.sim_runs[1])
+        print('%i galaxies in Simba-%s' % (len(df_all),p.sim_runs[1]))
+        df_all2 = df_all[df_all['SFR_'+method] > 0]
+        df_all = df_all1.append(df_all2, ignore_index=True)
+        hb = ax.hexbin(df_all['M_star_'+method],df_all['SFR_'+method],bins='log',xscale='log',yscale='log',\
+                                cmap='binary',lw=0,gridsize=(50,70))
+    except:
+        print('Missing file to plot all galaxies in Simba-%s' % (p.sim_runs[0]))
 
     # Plot 25 Mpc box? 
     if p.select == '_25Mpc':
@@ -958,8 +959,12 @@ def Main_Sequence(**kwargs):
     cb = fig.colorbar(sc, ax=ax)
     cb.set_label(r'log $\langle$Z$\rangle_{\rm{SFR}}$ [Z$_{\odot}$]')
     handles,labels = ax.get_legend_handles_labels()
-    handles = [handles[_] for _ in [1,0,2]]#np.flip(handles)
-    labels = [labels[_] for _ in [1,0,2]]#np.flip(labels)
+    try:
+        handles = [handles[_] for _ in [1,0,2]]#np.flip(handles)
+        labels = [labels[_] for _ in [1,0,2]]#np.flip(labels)
+    except:
+        handles = [handles[_] for _ in [1,0]]#np.flip(handles)
+        labels = [labels[_] for _ in [1,0]]#np.flip(labels)
     ax.legend(handles,labels,fontsize=12)
     if p.savefig:
         if not os.path.isdir(p.d_plot + 'sim_data/'): os.mkdir(p.d_plot + 'sim_data/')    
@@ -1121,10 +1126,10 @@ def star_map(**kwargs):
         fig = plt.figure(figsize=(8,6))
         ax1 = fig.add_axes([0.15, 0.15, 0.8, 0.8]) 
 
-    print('Range in stellar age [Myr]: ',np.min(simstar.age*1e3),np.max(simstar.age*1e3))
+    print('Range in stellar age [Myr]: ',np.min(simstar.age/1e6),np.max(simstar.age/1e6))
 
     sc = ax1.scatter(simstar.x,simstar.y,s=m,c=np.log10(simstar.age),alpha=0.6,cmap='jet',vmin=p.vmin,vmax=p.vmax)
-    # ax1.plot(simstar.x,simstar.y,'o',ms=1)
+    print(p.vmin,p.vmax)
     if p.colorbar: plt.colorbar(sc,shrink=0.6,ax=ax1,label='log stellar age [yr]')
     # ax1.axis('equal')
     ax1.set_aspect('equal', 'box')
