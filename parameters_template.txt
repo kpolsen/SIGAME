@@ -39,23 +39,19 @@ _25Mpc
 
 ----------------------------------------------------
 
-
 For cloudy models
 
-Lines to be calculated [lines] (must match lines in sigame.cloudy_modeling.py)
+Lines to be calculated [lines] (must match lines in sigame.Cloudy_modeling.py)
 '[CII]158','[CI]610','[CI]370','[OI]145','[OI]63','[OIII]88','[NII]122','[NII]205','CO(3-2)','CO(2-1)','CO(1-0)','[OIV]25','[NeII]12','[NeIII]15','[SIII]18','[FeII]25','H2_S(1)','H2_S(2)','H2_S(3)','H2_S(4)','H2_S(5)','H2_S(6)','H2_S(7)'
 
-Select grid run ('': default,'_ext':added max nh attenuation to spectra for lognh > 4,_dim2':spectra dimmed by factor 2) [grid_ext]
+Select grid run ('': default,'_ext':added max NH attenuation to spectra for lognH > 4,_dim2':spectra dimmed by factor 2) [grid_ext]
 
 
-Select table setting ('m10': mach number = 10, '_arepoPDF': parametrized PDF) [table_ext]
+Select table setting ('_M10': Mach number = 10, '_arepoPDF': parametrized PDF) [table_ext]
 _arepoPDF
 
 Select resolution for density PDF tables (pc) [res]
 200
-
-Option to insert HII regions (yes/no) [w_hii]
-no
 
 ----------------------------------------------------
 
@@ -110,5 +106,6 @@ BACKEND TASKS
 -1 step3_complete_Cloudy
 -1 step3_read_Cloudy_grid
 -1 step3_make_Cloudy_table
-+1 step4_interpolate
+-1 step4_interpolate
 -1 step4_derived_results
+
