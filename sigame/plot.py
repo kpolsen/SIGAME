@@ -905,7 +905,7 @@ def Main_Sequence(**kwargs):
         hb = ax.hexbin(df_all['M_star_'+method],df_all['SFR_'+method],bins='log',xscale='log',yscale='log',\
                                 cmap='binary',lw=0,gridsize=(50,70))
     except:
-        print('Missing file to plot all galaxies in Simba-%s' % (p.sim_runs[0]))
+        print('Missing file to plot all galaxies in Simba%s' % (p.sim_runs[0]))
 
     # Plot 25 Mpc box? 
     if p.select == '_25Mpc':
@@ -925,8 +925,6 @@ def Main_Sequence(**kwargs):
         Zsfr = Zsfr[indices]
         print('With MS selection criteria: only %i galaxies' % (len(M_star)))
     ax.plot(1,1,'o',color='forestgreen',label='Simba-100 galaxy sample',ms=10)
-    print(len(M_star))
-    print(np.max(Zsfr))
     sc = ax.scatter(M_star,SFR,\
             marker='o',s=20,alpha=0.8,c=np.log10(Zsfr),vmin=np.log10(0.01),vmax=np.log10(2),cmap='summer',zorder=10)
 
